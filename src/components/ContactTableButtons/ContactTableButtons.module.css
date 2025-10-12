@@ -1,0 +1,81 @@
+.button-container {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.circle-button {
+    width: 23px;
+    height: 23px;
+    border-radius: 50%;
+    color: white;
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-direction: row;
+    gap: 4px;
+    overflow: hidden;
+}
+
+.pink {
+    background-color: var(--pink-color);
+}
+
+.blue {
+    background-color: var(--blue-color);
+}
+
+.orange {
+    background-color: var(--orange-color);
+}
+
+.button-label {
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.circle-button:hover {
+    width: auto;
+    padding: 0 8px;
+    border-radius: 20px;
+}
+
+.circle-button:hover .button-label {
+    opacity: 1;
+}
+
+.icon {
+    width: 18px;
+    height: 18px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    margin-top: 6px;
+}
+
+.circle-button:hover .icon {
+    opacity: 1;
+}
+
+.button-at-edit-mode {
+    opacity: 0;
+    width: 0;
+}
+
+.edit-button-active {
+    width: auto;
+    padding: 0 8px;
+    border-radius: 20px;
+    transition: transform 0.3s ease;
+    will-change: transform;
+    transform-origin: center center;
+}
+
+.span-edit-button-active {
+    opacity: 1;
+}
+
+.edit-button-active:hover {
+    transform: scale(1.2);
+}

@@ -1,0 +1,36 @@
+.input-label {
+    color: rgb(255, 39, 125);
+    font-size: 17px;
+    text-align: center;
+    margin-top: 5px;
+}
+
+.input-container {
+    width: 30%;
+    height: 40px;
+    border-radius: 4px;
+    background-color: #f1f5f5;
+    padding: 5px 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.input-container:focus-within {
+    border: 2px solid rgb(218, 35, 109);
+}
+
+.input-container input {
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+    background-color: transparent;
+    font-size: 16px;
+
+}
+
+.input-container input::placeholder {
+    color: #a0a0a0;
+}

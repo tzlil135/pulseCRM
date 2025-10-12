@@ -1,0 +1,17 @@
+.label-wrapp {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 2px solid #f0f0f0;
+    border-radius: 10px;
+    padding: 20px;
+}
+
+.label-wrapp p {
+    font-size: 10px;
+    color: #b44e4e;
+}
+
+.label-wrapp h4 {
+    margin-bottom: 20px;
+}

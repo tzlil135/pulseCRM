@@ -1,0 +1,221 @@
+:root {
+    --blue-color-dark: #0056b3;
+    --sky-blue: #eefaff;
+    --cotton-candy-pink: #fbeaec;
+    --light-lemon: #f2f9df;
+}
+
+.form-container {
+    position: absolute;
+    z-index: 1000;
+    top: 160px;
+    right: 80px;
+    width: 300px;
+    height: 480px;
+    background-color: white;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    padding: 16px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+}
+
+.form-content {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.form-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    justify-content: flex-start;
+}
+
+.zebra-striping-options-container {
+    margin-top: 12px;
+}
+
+.zebra-striping-options {
+    display: flex;
+    align-items: flex-start;
+    justify-content: flex-start;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.zebra-striping-option {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+    padding: 0 12px;
+    width: 100%;
+    height: 40px;
+    transition: 0.3s ease;
+}
+
+.zebra-striping-option--sky-blue {
+    color: #80c0da;
+    margin-top: 7px;
+}
+
+.zebra-striping-option--cotton-candy-pink {
+    color: #ff9fad;
+}
+
+.zebra-striping-option--light-lemon {
+    color: #e3f186;
+}
+
+.zebra-striping-option--sky-blue:hover {
+    color: rgb(58, 123, 176);
+    background-color: var(--sky-blue);
+}
+
+.zebra-striping-option--light-lemon:hover {
+    color: rgb(176, 174, 88);
+    background-color: var(--light-lemon);
+}
+
+.zebra-striping-option--cotton-candy-pink:hover {
+    color: rgb(213, 95, 154);
+    background-color: var(--cotton-candy-pink);
+}
+
+.active-blue {
+    color: rgb(58, 123, 176);
+    background-color: var(--sky-blue);
+}
+
+.active-pink {
+    color: rgb(213, 95, 154);
+    background-color: var(--cotton-candy-pink);
+}
+
+.active-yellow {
+    color: rgb(176, 174, 88);
+    background-color: var(--light-lemon);
+}
+
+.form-label-manage-columns {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.form-group-columns {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-label-title {
+    font-weight: 500;
+}
+
+.form-label-columns {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-label-column {
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 8px;
+}
+
+.form-actions {
+    display: flex;
+    justify-content: flex-start;
+    gap: 10px;
+
+    button {
+        padding: 10px 12px;
+        border: none;
+        border-radius: 4px;
+        background-color: var(--blue-color);
+        color: white;
+        cursor: pointer;
+        transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+        background-color: var(--blue-color-dark);
+    }
+}
+
+input[type="checkbox"] {
+    appearance: none;
+    -webkit-appearance: none;
+    width: 15px;
+    height: 15px;
+    border: 0.5px solid var(--orange-color);
+    border-radius: 3px;
+    background-color: white;
+    cursor: pointer;
+    position: relative;
+}
+
+input[type="checkbox"]:checked {
+    background-color: var(--orange-color);
+    color: white;
+}
+
+input[type="checkbox"]:checked::after {
+    content: "✔";
+    color: white;
+    font-size: 12px;
+    position: absolute;
+    left: 2px;
+    top: -1.8px;
+}
+
+input[type="radio"] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border: 0.5px solid var(--orange-color);
+    border-radius: 50%;
+    background-color: #fff;
+    cursor: pointer;
+    position: relative;
+    display: inline-block;
+    vertical-align: middle;
+}
+
+input[type="radio"]:checked {
+    border-width: 2.5px;
+}
+
+@keyframes grow {
+    from {
+        transform: translate(-50%, -50%) scale(0);
+        opacity: 0;
+    }
+
+    to {
+        transform: translate(-50%, -50%) scale(1);
+        opacity: 1;
+    }
+}
+
+input[type="radio"]:checked::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--pink-color);
+    animation: grow 0.2s ease forwards;
+}

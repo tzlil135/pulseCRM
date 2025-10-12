@@ -1,0 +1,41 @@
+.form-fields-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 10px;
+}
+
+.form-fields-wrapper div {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    justify-content: space-between;
+    width: 100%;
+}
+
+.form-fields-wrapper input {
+    width: 60%;
+    height: 20px;
+    padding: 20px 10px;
+    border: none;
+    border-bottom: 1px solid #000000;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    background-color: #f0f0f0;
+}
+
+.form-fields-wrapper input:focus {
+    outline: none;
+    background-color: #dcdcdc;
+}
+
+.form-fields-wrapper textarea {
+    padding: 20px 10px;
+    border: none;
+    border-bottom: 1px solid #000000;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    background-color: #f0f0f0;
+    resize: none;
+}
