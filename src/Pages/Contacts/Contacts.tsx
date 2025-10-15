@@ -16,13 +16,49 @@ import type { FilterType } from '../../types/fitchers';
 import { filterContacts } from '../../hooks/contactFilter';
 import { filterContactsGlobal } from '../../utils/filterContactsGlobal';
 import { useContactsGlobalFilterContext } from '../../contexts/ContactsGlobalFilter';
+import { getContacts } from '../../service/contactService';
+import { useNavigate, useLocation } from 'react-router-dom';
+import { useBackBtn } from '../../contexts/BackBtn';
+
 
 export type ZebraColor = 'sky-blue' | 'cotton-candy-pink' | 'light-lemon' | '';
 
 const Contacts = () => {
 
+    const readInitialListState = () => {
+        const shouldRestore = sessionStorage.getItem("contacts:restoreOnce") === "1";
 
-    const [contacts, setContacts] = useState<ContactTableType[]>([]);
+        if (shouldRestore) {
+            sessionStorage.removeItem("contacts:restoreOnce");
+            try {
+                const raw = sessionStorage.getItem("contacts:listState");
+                return raw ? JSON.parse(raw) : {};
+            } catch {
+                return {};
+            }
+        }
+
+        sessionStorage.removeItem("contacts:listState");
+        return {};
+    };
+
+    const initial = readInitialListState();
+
+    const navigate = useNavigate();
+    const location = useLocation();
+    const { setLastListURL } = useBackBtn();
+
+    const saveCurrentURLgoToContact = (id: string) => {
+        sessionStorage.setItem(
+            "contacts:listState",
+            JSON.stringify({ page: currentPage, rowsPerPage, sortBy, isAsc, activeFilter })
+        );
+        sessionStorage.setItem("contacts:restoreOnce", "1");
+        setLastListURL(`${location.pathname}${location.search}`);
+        navigate(`/contacts/${id}`);
+    };
+
+    const [contacts, setContacts] = useState<ContactTableType[]>(() => getContacts());
     const [checkItems, setCheckItems] = useState<{ [id: string]: boolean }>({});
     const [selectAll, setSelectAll] = useState(false);
 
@@ -33,8 +69,8 @@ const Contacts = () => {
     const [editValues, setEditValues] = useState<{ [key: string]: Contact }>({});
     const [isEditing, setIsEditing] = useState(false);
 
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [currentPage, setCurrentPage] = useState(1);
+    const [rowsPerPage, setRowsPerPage] = useState<number>(() => initial.rowsPerPage ?? 10);
+    const [currentPage, setCurrentPage] = useState<number>(() => initial.page ?? 1);
     const [displayedContacts, setDisplayedContacts] = useState<ContactTableType[]>([]);
 
     const [sortedContacts, setSortedContacts] = useState<ContactTableType[]>([]);
@@ -52,10 +88,14 @@ const Contacts = () => {
     const [phoneColumnVisible, setPhoneColumnVisible] = useState(true);
     const [companyColumnVisible, setCompanyColumnVisible] = useState(true);
 
-    const [isAsc, setIsAsc] = useState(false);
-    const [sortBy, setSortBy] = useState<keyof ContactTableType | null>('name');
+    const [isAsc, setIsAsc] = useState<boolean>(() =>
+        typeof initial.isAsc === "boolean" ? initial.isAsc : false
+    );
+    const [sortBy, setSortBy] = useState<keyof ContactTableType | null>(() => initial.sortBy ?? "name");
 
-    const [activeFilter, setActiveFilter] = useState<{ [column: string]: FilterType | null }>({});
+    const [activeFilter, setActiveFilter] = useState<{ [column: string]: FilterType | null }>(
+        () => initial.activeFilter ?? {}
+    );
 
     const { currentValue: globalFilter } = useContactsGlobalFilterContext();
 
@@ -66,6 +106,7 @@ const Contacts = () => {
             setSortBy(column);
             setIsAsc(true);
         }
+        setCurrentPage(1);
     };
 
     useEffect(() => {
@@ -79,22 +120,8 @@ const Contacts = () => {
         const sorted = sortContacts(byGlobal, sortBy, isAsc);
 
         setSortedContacts(sorted);
-        setCurrentPage(1);
     }, [contacts, activeFilter, globalFilter, sortBy, isAsc]);
 
-
-
-    useEffect(() => {
-        const storedContacts = localStorage.getItem('contacts');
-        if (storedContacts) {
-            try {
-                const parsedContacts = JSON.parse(storedContacts);
-                setContacts(parsedContacts);
-            } catch (error) {
-                console.error('Failed to parse contacts from localStorage:', error);
-            }
-        }
-    }, []);
 
     useEffect(() => {
         setContactsAmount(sortedContacts.length);
@@ -109,9 +136,10 @@ const Contacts = () => {
     }, [sortedContacts, checkItems]);
 
     useEffect(() => {
+        if (sortedContacts.length === 0) return;
         const newTotal = Math.max(1, Math.ceil(sortedContacts.length / rowsPerPage));
         if (currentPage > newTotal) setCurrentPage(newTotal);
-    }, [sortedContacts, rowsPerPage, currentPage]);
+    }, [sortedContacts, rowsPerPage]);
 
     useEffect(() => {
         const all =
@@ -120,14 +148,17 @@ const Contacts = () => {
     }, [sortedContacts, checkItems]);
 
     useEffect(() => {
-        setCurrentPage(1);
-    }, [rowsPerPage]);
-
-    useEffect(() => {
         const startIndex = (currentPage - 1) * rowsPerPage;
         const endIndex = startIndex + rowsPerPage;
         setDisplayedContacts(sortedContacts.slice(startIndex, endIndex));
     }, [currentPage, sortedContacts, rowsPerPage]);
+
+    useEffect(() => {
+        sessionStorage.setItem(
+            "contacts:listState",
+            JSON.stringify({ page: currentPage, rowsPerPage, sortBy, isAsc, activeFilter })
+        );
+    }, [currentPage, rowsPerPage, sortBy, isAsc, activeFilter]);
 
     const handleCheck = (id: string) => {
         if (isEditing) return;
@@ -478,16 +509,15 @@ const Contacts = () => {
                         <tbody>
                             {displayedContacts.map((contact, index) => (
                                 <tr
-
                                     key={contact.id}
                                     className={`${styles['table-row']} ${checkItems[contact.id] ? styles['row-checked'] : ''} ${isZebraStripingEnabled && index % 2 === 1 ? zebraClasses[zebraStripingColor] : ''
                                         }`}
-
+                                    onClick={() => { if (!isEditing) saveCurrentURLgoToContact(contact.id); }}
                                 >
                                     <td className={`${styles['table-cell']}`}>
                                         <div
                                             className={`${styles['custom-checkbox']} ${checkItems[contact.id] ? styles['checked'] : ''}`}
-                                            onClick={() => handleCheck(contact.id)}
+                                            onClick={(e) => { e.stopPropagation(); handleCheck(contact.id) }}
                                             role="checkbox"
                                             aria-checked={!!checkItems[contact.id]}
                                             tabIndex={0}
@@ -507,18 +537,21 @@ const Contacts = () => {
                                                     type="text"
                                                     value={editValues[contact.id]?.name.firstName || ''}
                                                     onChange={e => handleEditChange(contact.id, 'name.firstName', e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
                                                 />
                                                 <input
                                                     className={styles['input-field']}
                                                     type="text"
                                                     value={editValues[contact.id]?.name.middleName || ''}
                                                     onChange={e => handleEditChange(contact.id, 'name.middleName', e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
                                                 />
                                                 <input
                                                     className={styles['input-field']}
                                                     type="text"
                                                     value={editValues[contact.id]?.name.lastName || ''}
                                                     onChange={e => handleEditChange(contact.id, 'name.lastName', e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
                                                 />
                                             </>
                                         ) : (
@@ -533,18 +566,21 @@ const Contacts = () => {
                                                     type="text"
                                                     value={editValues[contact.id]?.address.street || ''}
                                                     onChange={e => handleEditChange(contact.id, 'address.street', e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
                                                 />
                                                 <input
                                                     className={styles['input-field']}
                                                     type="text"
                                                     value={editValues[contact.id]?.address.city || ''}
                                                     onChange={e => handleEditChange(contact.id, 'address.city', e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
                                                 />
                                                 <input
                                                     className={styles['input-field']}
                                                     type="text"
                                                     value={editValues[contact.id]?.address.houseNumber || ''}
                                                     onChange={e => handleEditChange(contact.id, 'address.houseNumber', e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
                                                 />
                                             </>
                                         ) : (
@@ -558,6 +594,7 @@ const Contacts = () => {
                                                 type="email"
                                                 value={editValues[contact.id]?.email || ''}
                                                 onChange={e => handleEditChange(contact.id, 'email', e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
                                             />
                                         ) : (
                                             contact.email
@@ -570,6 +607,7 @@ const Contacts = () => {
                                                 type="tel"
                                                 value={editValues[contact.id]?.phone || ''}
                                                 onChange={e => handleEditChange(contact.id, 'phone', e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
                                             />
                                         ) : (
                                             contact.phone
@@ -582,6 +620,7 @@ const Contacts = () => {
                                                 type="text"
                                                 value={editValues[contact.id]?.company || ''}
                                                 onChange={e => handleEditChange(contact.id, 'company', e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
                                             />
                                         ) : (
                                             contact.company
@@ -613,7 +652,7 @@ const Contacts = () => {
                                                     <GrFormNext />
                                                 </button>
                                             </span>
-                                            <select value={rowsPerPage} onChange={e => setRowsPerPage(Number(e.target.value))}>
+                                            <select value={rowsPerPage} onChange={e => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}>
                                                 <option value={5}>5</option>
                                                 <option value={10}>10</option>
                                                 <option value={20}>20</option>

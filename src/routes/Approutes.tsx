@@ -6,6 +6,7 @@ import Contacts from "../Pages/Contacts/Contacts";
 import Dashboard from "../Pages/Dashboard/Dashboard";
 import AddEventForm from "../forms/AddEventForm/AddEventForm";
 import AddContactForm from "../forms/AddContactForm/AddContactForm";
+import Contact from "../Pages/Contacts/contact/Contact";
 
 const AppRoutes = () => {
     return (
@@ -18,6 +19,7 @@ const AppRoutes = () => {
                 <Route path="/dashboard" element={<Dashboard />} />
                 <Route path="/add-event" element={<AddEventForm />} />
                 <Route path="/add-contact" element={<AddContactForm />} />
+                <Route path="/contacts/:id" element={<Contact />} />
             </Routes>
         </>
     )

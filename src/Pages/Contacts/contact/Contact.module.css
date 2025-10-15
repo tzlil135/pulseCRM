@@ -28,3 +28,10 @@
     flex-direction: column;
     gap: 20px;
 }
+
+.readonlySelect {
+    background-color: #f7f7f7;
+    color: #666;
+    border-color: #ddd;
+    pointer-events: none;
+}

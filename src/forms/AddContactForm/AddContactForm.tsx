@@ -10,7 +10,7 @@ import CallerLocationField from "./AddContactFormFields/CallerLocationfield";
 import toast, { Toaster } from "react-hot-toast";
 import { useFormSubmitContext } from "../../contexts/FormSubmitContext";
 import { useEffect } from "react";
-import { addContact } from "../../service/eventService";
+import { addContact } from "../../service/contactService";
 
 const AddContactForm = () => {
 
