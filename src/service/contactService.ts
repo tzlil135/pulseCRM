@@ -27,3 +27,32 @@ export const getContactById = (id: string): ClientType | undefined => {
         return undefined;
     }
 };
+
+type DeepPartial<T> = { [K in keyof T]?: T[K] extends object ? DeepPartial<T[K]> : T[K] };
+
+/** בעדכון לא משנים id */
+export type ContactPatch = DeepPartial<Omit<ClientType, "id">>;
+
+export const updateContact = (id: string, patch: ContactPatch): ClientType | null => {
+    try {
+        const contacts = getContacts();
+        const idx = contacts.findIndex(c => c.id === id);
+        if (idx === -1) return null;
+
+        const current = contacts[idx];
+
+        const merged: ClientType = {
+            ...current,
+            ...patch,
+            name: { ...current.name, ...(patch.name ?? {}) },
+            address: { ...current.address, ...(patch.address ?? {}) }, // houseNumber נשאר string
+        };
+
+        contacts[idx] = merged;
+        localStorage.setItem("contacts", JSON.stringify(contacts));
+        return merged;
+    } catch (e) {
+        console.error("updateContact error:", e);
+        return null;
+    }
+};

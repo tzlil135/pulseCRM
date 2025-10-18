@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import styles from './MenuItems.module.css';
 import { IoArrowBack } from 'react-icons/io5';
 import { CiExport } from 'react-icons/ci';
@@ -6,6 +5,7 @@ import { useBackBtn } from '../../../contexts/BackBtn';
 import { useNavigate } from 'react-router-dom';
 import { FaRegEdit } from 'react-icons/fa';
 import { CiSaveDown2 } from 'react-icons/ci';
+import { useContactEditMode } from '../../../contexts/ContactEditMode';
 
 const ContactDM = () => {
 
@@ -18,10 +18,18 @@ const ContactDM = () => {
         else navigate('/contacts');
     };
 
-    const [isEditing, setIsEditing] = useState(false);
+    const { isEditing, setIsEditing, callOnSave } = useContactEditMode();
 
-    const handleEdit = () => {
-        setIsEditing(prev => !prev);
+    const handleEditOrSave = () => {
+        if (!isEditing) {
+            setIsEditing(true);
+            return;
+        }
+        if (typeof callOnSave !== "function") {
+            return;
+        }
+        const ok = callOnSave();
+        if (ok) setIsEditing(false);
     };
 
     return (
@@ -29,19 +37,26 @@ const ContactDM = () => {
             <div className={styles['navbar-list']}>
                 <ul className={styles['navbar-left']}>
                     <li >
-                        <button className={styles['menu-button']} onClick={handleGoBack}>
+                        <button
+                            type="button"
+                            className={styles['menu-button']}
+                            onClick={handleGoBack}
+                            disabled={isEditing}
+                            aria-disabled={isEditing}
+                            title={isEditing ? "Finish editing to go back" : undefined}
+                        >
                             <span>Back</span>
                             <span className={styles['icon-margin']}><IoArrowBack /></span>
                         </button>
                     </li>
                     <li>
-                        <button className={styles['menu-button']} onClick={handleEdit}>
+                        <button type="button" className={styles['menu-button']} onClick={handleEditOrSave}>
                             <span>{isEditing ? 'Save' : 'Edit'}</span>
                             <span className={styles['icon-margin']}>{isEditing ? <CiSaveDown2 /> : <FaRegEdit />}</span>
                         </button>
                     </li>
                     <li>
-                        <button className={styles['menu-button']}>
+                        <button type="button" className={styles['menu-button']}>
                             <span>Open Event</span>
                             <span className={styles['icon-margin']}><CiExport /></span>
                         </button>

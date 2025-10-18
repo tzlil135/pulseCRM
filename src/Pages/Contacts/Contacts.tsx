@@ -3,7 +3,6 @@ import styles from './Contacts.module.css';
 import type { Contact, ContactTableType } from '../../types/client';
 import ContactTableButtons from '../../components/ContactTableButtons/ContactTableButtons';
 import toast from 'react-hot-toast';
-import { Toaster } from 'react-hot-toast';
 import { contactTableEditSchema } from '../../validations/contactTableEditSchema';
 import { GrFormNext, GrFormPrevious } from 'react-icons/gr';
 import { IoEllipsisVertical } from 'react-icons/io5';
@@ -347,7 +346,6 @@ const Contacts = () => {
 
     return (
         <>
-            <Toaster />
             <div className={styles['contacts-container']}>
                 <div className={styles['table-header-title']}>
                     <h3 className={styles['table-title']}>Contacts</h3>
