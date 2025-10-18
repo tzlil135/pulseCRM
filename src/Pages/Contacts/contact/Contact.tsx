@@ -19,7 +19,7 @@ const POSITIONS = [
 const Contact = () => {
 
     const { id } = useParams<{ id: string }>();
-    const { isEditing, callOnSave, registerOnSave } = useContactEditMode();
+    const { isEditing, registerOnSave } = useContactEditMode();
 
     if (!id) {
         return <div>Contact ID is missing</div>;
