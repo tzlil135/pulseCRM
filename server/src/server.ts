@@ -3,12 +3,20 @@ import express from "express";
 import { Request, Response, NextFunction } from "express";
 import handleError from "./utils/errorHandler";
 import router from "./router/router";
+import cors from "./middlewares/cors";
 
 const app = express();
+
+app.use(cors);
+
 app.use(express.json());
 app.use(express.text());
 app.use(express.static("./public"));
 app.use(router);
+
+app.get("/", (req, res) => {
+    res.send("Server is running");
+});
 
 app.use((
     error: any,
