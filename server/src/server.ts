@@ -4,10 +4,12 @@ import { Request, Response, NextFunction } from "express";
 import handleError from "./utils/errorHandler";
 import router from "./router/router";
 import cors from "./middlewares/cors";
+import logger from "./logger/loggerService";
 
 const app = express();
 
 app.use(cors);
+app.use(logger);
 
 app.use(express.json());
 app.use(express.text());
