@@ -2,15 +2,13 @@ import chalk from "chalk";
 import express from "express";
 import { Request, Response, NextFunction } from "express";
 import handleError from "./utils/errorHandler";
+import router from "./router/router";
 
 const app = express();
 app.use(express.json());
 app.use(express.text());
 app.use(express.static("./public"));
-
-app.get('/', (req, res) => {
-    res.send('Hello, World!');
-});
+app.use(router);
 
 app.use((
     error: any,
