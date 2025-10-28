@@ -1,4 +1,6 @@
 import { find, findById, create, update, remove } from "../models/contactsDataAccessService";
+import validateNewContact from "../validations/contactValidationService";
+import { ContactInput } from "../../types/contact";
 
 export const getContacts = async () => {
     try {
@@ -18,10 +20,17 @@ export const getContactById = async (id: string) => {
     }
 };
 
-export const createContact = async (contact: any) => {
+export const createContact = async (contact: ContactInput) => {
     try {
-        const newContact = await create(contact);
-        return Promise.resolve(newContact);
+        const { error, value } = validateNewContact(contact);
+        if (error) {
+            const validationError: any = new Error("Validation failed");
+            validationError.status = 400;
+            validationError.messages = error.details.map((d) => d.message);
+            throw validationError;
+        }
+        const newContact = await create(value);
+        return (newContact);
     } catch (error) {
         return Promise.reject(error);
     }

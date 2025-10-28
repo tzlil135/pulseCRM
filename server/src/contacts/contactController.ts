@@ -6,8 +6,12 @@ router.get('/', async (req: express.Request, res: express.Response) => {
     try {
         const contacts = await getContacts();
         res.json(contacts);
-    } catch (error) {
-        res.status(500).json({ error });
+    } catch (error: any) {
+        console.error("GET /contacts failed:", error);
+        res.status(500).json({
+            message: "Server error",
+            details: error.message || "Unknown error",
+        });
     }
 });
 
@@ -24,9 +28,22 @@ router.get('/:id', async (req: express.Request, res: express.Response) => {
 router.post('/', async (req: express.Request, res: express.Response) => {
     try {
         const newContact = await createContact(req.body);
-        res.status(201).json(newContact);
-    } catch (error) {
-        res.status(500).json({ error });
+        return res.status(201).json({
+            message: "Contact created",
+            contact: newContact,
+        });
+    } catch (error: any) {
+        if (error.status === 400 && error.messages) {
+            return res.status(400).json({
+                message: "Validation failed",
+                details: error.messages,
+            });
+        }
+        console.error(`POST /contacts failed:`, error);
+        res.status(500).json({
+            message: "Server error",
+            details: error.message || "Unknown error",
+        });
     }
 });
 

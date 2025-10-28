@@ -59,12 +59,12 @@ export const contactTableEditSchema = Joi.object({
                 "string.empty": "City is required",
                 "any.required": "City is required",
             }),
-        houseNumber: Joi.alternatives()
-            .try(Joi.string().trim(), Joi.number())
+        houseNumber: Joi.string()
+            .trim()
             .required()
             .messages({
-                "any.required": "House number is required",
                 "string.empty": "House number is required",
+                "any.required": "House number is required",
             }),
     }).required(),
     phone: Joi.string()
