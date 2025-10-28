@@ -5,6 +5,7 @@ import handleError from "./utils/errorHandler";
 import router from "./router/router";
 import cors from "./middlewares/cors";
 import logger from "./logger/loggerService";
+import connectToDB from "./DB/dbService";
 
 const app = express();
 
@@ -35,4 +36,5 @@ const PORT = process.env.PORT || 8181;
 
 app.listen(PORT, () => {
     console.log(chalk.green(`Server is running on http://localhost:${PORT}`));
+    connectToDB();
 });
