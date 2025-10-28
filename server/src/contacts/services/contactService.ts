@@ -36,10 +36,17 @@ export const createContact = async (contact: ContactInput) => {
     }
 };
 
-export const updateContact = async (id: string, contact: any) => {
+export const updateContact = async (id: string, contact: ContactInput) => {
     try {
-        const updatedContact = await update(id, contact);
-        return Promise.resolve(updatedContact);
+        const { error, value } = validateNewContact(contact);
+        if (error) {
+            const validationError: any = new Error("Validation failed");
+            validationError.status = 400;
+            validationError.messages = error.details.map((d) => d.message);
+            throw validationError;
+        }
+        const updatedContact = await update(id, value);
+        return (updatedContact);
     } catch (error) {
         return Promise.reject(error);
     }

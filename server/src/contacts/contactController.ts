@@ -49,12 +49,24 @@ router.post('/', async (req: express.Request, res: express.Response) => {
 
 router.put('/:id', async (req: express.Request, res: express.Response) => {
     const { id } = req.params;
-    const updatedContact = req.body;
     try {
-        const contact = await updateContact(id, updatedContact);
-        res.json(contact);
-    } catch (error) {
-        res.status(500).json({ error });
+        const updated = await updateContact(id, req.body);
+        return res.json({
+            message: "Contact updated",
+            contact: updated,
+        });
+    } catch (error: any) {
+        if (error.status === 400 && error.messages) {
+            return res.status(400).json({
+                message: "Validation failed",
+                details: error.messages,
+            });
+        }
+        console.error(`PUT /contacts/${id} failed:`, error);
+        res.status(500).json({
+            message: "Server error",
+            details: error.message || "Unknown error",
+        });
     }
 });
 
