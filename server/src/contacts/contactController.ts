@@ -2,81 +2,51 @@ import express from "express";
 import { getContacts, getContactById, createContact, updateContact, deleteContact } from "./services/contactService";
 const router = express.Router();
 
-router.get('/', async (req: express.Request, res: express.Response) => {
+router.get('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     try {
         const contacts = await getContacts();
-        res.json(contacts);
+        res.status(200).send(contacts);
     } catch (error: any) {
-        console.error("GET /contacts failed:", error);
-        res.status(500).json({
-            message: "Server error",
-            details: error.message || "Unknown error",
-        });
+        next(error);
     }
 });
 
-router.get('/:id', async (req: express.Request, res: express.Response) => {
+router.get('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     try {
         const { id } = req.params;
         const contact = await getContactById(id);
-        res.json(contact);
+        res.status(200).json(contact);
     } catch (error) {
-        res.status(500).json({ error });
+        next(error);
     }
 });
 
-router.post('/', async (req: express.Request, res: express.Response) => {
+router.post('/', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     try {
-        const newContact = await createContact(req.body);
-        return res.status(201).json({
-            message: "Contact created",
-            contact: newContact,
-        });
+        const newContact = await createContact(req.body || {});
+        res.status(201).send({ message: "Contact created", contact: newContact });
     } catch (error: any) {
-        if (error.status === 400 && error.messages) {
-            return res.status(400).json({
-                message: "Validation failed",
-                details: error.messages,
-            });
-        }
-        console.error(`POST /contacts failed:`, error);
-        res.status(500).json({
-            message: "Server error",
-            details: error.message || "Unknown error",
-        });
+        next(error);
     }
 });
 
-router.put('/:id', async (req: express.Request, res: express.Response) => {
+router.put('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const { id } = req.params;
     try {
         const updated = await updateContact(id, req.body);
-        return res.json({
-            message: "Contact updated",
-            contact: updated,
-        });
+        res.status(200).send({ message: "Contact updated", contact: updated });
     } catch (error: any) {
-        if (error.status === 400 && error.messages) {
-            return res.status(400).json({
-                message: "Validation failed",
-                details: error.messages,
-            });
-        }
-        console.error(`PUT /contacts/${id} failed:`, error);
-        res.status(500).json({
-            message: "Server error",
-            details: error.message || "Unknown error",
-        });
+        next(error);
     }
 });
 
-router.delete('/:id', async (req: express.Request, res: express.Response) => {
+router.delete('/:id', async (req: express.Request, res: express.Response, next: express.NextFunction) => {
     const { id } = req.params;
     try {
         const deletedContact = await deleteContact(id);
-        res.json(deletedContact);
-    } catch (error) {
-        res.status(500).json({ error });
+        res.status(200).send({ message: "Contact deleted", contact: deletedContact });
+    } catch (error: any) {
+        next(error);
     }
 });
 

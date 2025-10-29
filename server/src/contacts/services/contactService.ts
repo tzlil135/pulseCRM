@@ -3,21 +3,13 @@ import validateNewContact from "../validations/contactValidationService";
 import { ContactInput } from "../../types/contact";
 
 export const getContacts = async () => {
-    try {
-        const contacts = await find();
-        return Promise.resolve(contacts);
-    } catch (error) {
-        return Promise.reject(error);
-    }
+    const contacts = await find();
+    return contacts;
 };
 
 export const getContactById = async (id: string) => {
-    try {
-        const contact = await findById(id);
-        return Promise.resolve(contact);
-    } catch (error) {
-        return Promise.reject(error);
-    }
+    const contact = await findById(id);
+    return contact;
 };
 
 export const createContact = async (contact: ContactInput) => {
@@ -30,33 +22,45 @@ export const createContact = async (contact: ContactInput) => {
             throw validationError;
         }
         const newContact = await create(value);
-        return (newContact);
-    } catch (error) {
-        return Promise.reject(error);
+        return newContact;
+    } catch (error: any) {
+        if (!error.status) {
+            error.status = 500;
+            error.message = error.message || "Server error";
+        }
+        throw error;
     }
 };
 
 export const updateContact = async (id: string, contact: ContactInput) => {
     try {
+        if (!id) {
+            const err: any = new Error("ID is required");
+            err.status = 400;
+            throw err;
+        }
+
         const { error, value } = validateNewContact(contact);
+
         if (error) {
             const validationError: any = new Error("Validation failed");
             validationError.status = 400;
             validationError.messages = error.details.map((d) => d.message);
             throw validationError;
         }
+
         const updatedContact = await update(id, value);
         return (updatedContact);
-    } catch (error) {
-        return Promise.reject(error);
+
+    } catch (error: any) {
+        if (!error.status) {
+            error.status = 500;
+            error.message = error.message || "Server error";
+        }
+        throw error;
     }
 };
 
 export const deleteContact = async (id: string) => {
-    try {
-        const deletedContact = await remove(id);
-        return Promise.resolve(deletedContact);
-    } catch (error) {
-        return Promise.reject(error);
-    }
+    return await remove(id);
 };
