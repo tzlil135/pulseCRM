@@ -1,0 +1,8 @@
+{
+    "NODE_ENV": "production",
+    "PORT": 8181,
+    "DB_NAME": "pulsecrm_user",
+    "DB_PASSWORD": "Tzl135Tzl135",
+    "LOGGER": "morgan",
+    "DB": "MONGODB"
+}

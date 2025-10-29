@@ -6,6 +6,7 @@ import router from "./router/router";
 import cors from "./middlewares/cors";
 import logger from "./logger/loggerService";
 import connectToDB from "./DB/dbService";
+import config from "config";
 
 const app = express();
 
@@ -32,7 +33,7 @@ app.use((
     return handleError(res, statusCode, message);
 });
 
-const PORT = process.env.PORT || 8181;
+const PORT = config.get<number>("PORT");
 
 app.listen(PORT, () => {
     console.log(chalk.green(`Server is running on http://localhost:${PORT}`));

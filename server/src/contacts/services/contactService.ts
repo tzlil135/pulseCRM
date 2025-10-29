@@ -18,7 +18,6 @@ export const createContact = async (contact: ContactInput) => {
         if (error) {
             const validationError: any = new Error("Validation failed");
             validationError.status = 400;
-            validationError.messages = error.details.map((d) => d.message);
             throw validationError;
         }
         const newContact = await create(value);
@@ -45,7 +44,6 @@ export const updateContact = async (id: string, contact: ContactInput) => {
         if (error) {
             const validationError: any = new Error("Validation failed");
             validationError.status = 400;
-            validationError.messages = error.details.map((d) => d.message);
             throw validationError;
         }
 
