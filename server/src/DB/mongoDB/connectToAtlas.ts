@@ -1,7 +1,11 @@
 import mongoose from "mongoose";
 import chalk from "chalk";
+import config from "config";
 
-mongoose.connect('mongodb+srv://pulsecrm_user:Tzl135Tzl135@cluster1.vou4qaw.mongodb.net/')
+const user = config.get<string>("DB_USER");
+const password = config.get<string>("DB_PASSWORD");
+
+mongoose.connect(`mongodb+srv://${user}:${password}@cluster1.vou4qaw.mongodb.net/`)
     .then(() => {
         console.log(chalk.bgGreenBright("Connected to MongoDB Atlas"));
     })

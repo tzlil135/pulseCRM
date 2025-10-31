@@ -1,7 +1,8 @@
 import { RequestHandler } from "express";
-import { morganLogger } from "./loogers/morganLogger";
+import { morganLogger } from "./loggers/morganLogger";
+import config from "config";
 
-const LOGGER = "morgan";
+const LOGGER = config.get<string>("LOGGER");
 
 let loggerMiddleware: RequestHandler;
 
