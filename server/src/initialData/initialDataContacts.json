@@ -1,0 +1,416 @@
+[
+    {
+        "name": {
+            "firstName": "Adi",
+            "middleName": "",
+            "lastName": "Levi"
+        },
+        "email": "adi.levi@example.com",
+        "phone": "0501234567",
+        "officePhone": "",
+        "address": {
+            "street": "Herzl",
+            "city": "Tel Aviv",
+            "houseNumber": "12"
+        },
+        "company": "Pulse Studio",
+        "position": "CEO",
+        "notes": "Key account"
+    },
+    {
+        "name": {
+            "firstName": "Bar",
+            "middleName": "Noam",
+            "lastName": "Cohen"
+        },
+        "email": "bar.cohen@example.com",
+        "phone": "0529871122",
+        "officePhone": "036555555",
+        "address": {
+            "street": "Dizengoff",
+            "city": "Tel Aviv",
+            "houseNumber": "101"
+        },
+        "company": "Blue Byte",
+        "position": "Manager",
+        "notes": ""
+    },
+    {
+        "name": {
+            "firstName": "Carmel",
+            "middleName": "",
+            "lastName": "Mizrahi"
+        },
+        "email": "carmel.mizrahi@example.com",
+        "phone": "0537654433",
+        "officePhone": "",
+        "address": {
+            "street": "Weizmann",
+            "city": "Ramat Gan",
+            "houseNumber": "7"
+        },
+        "company": "Nova Labs",
+        "position": "Team Leader",
+        "notes": "Leads frontend squad"
+    },
+    {
+        "name": {
+            "firstName": "Daniel",
+            "middleName": "Yael",
+            "lastName": "Azulay"
+        },
+        "email": "daniel.azulay@example.com",
+        "phone": "0505559090",
+        "officePhone": "",
+        "address": {
+            "street": "Rothschild",
+            "city": "Tel Aviv",
+            "houseNumber": "3"
+        },
+        "company": "GreenTech",
+        "position": "Assistant Manager",
+        "notes": ""
+    },
+    {
+        "name": {
+            "firstName": "Ella",
+            "middleName": "",
+            "lastName": "Bar"
+        },
+        "email": "ella.bar@example.com",
+        "phone": "0523037070",
+        "officePhone": "",
+        "address": {
+            "street": "Hillel",
+            "city": "Jerusalem",
+            "houseNumber": "18"
+        },
+        "company": "PixelArt",
+        "position": "Coordinator",
+        "notes": "Onboarding coordination"
+    },
+    {
+        "name": {
+            "firstName": "Noam",
+            "middleName": "Eli",
+            "lastName": "Peretz"
+        },
+        "email": "noam.peretz@example.com",
+        "phone": "0509988776",
+        "officePhone": "",
+        "address": {
+            "street": "Herzl",
+            "city": "Rishon LeZion",
+            "houseNumber": "45"
+        },
+        "company": "Pulse CRM",
+        "position": "Sales Representative",
+        "notes": "Lead from conference"
+    },
+    {
+        "name": {
+            "firstName": "Dana",
+            "middleName": "",
+            "lastName": "Avraham"
+        },
+        "email": "dana.avraham@example.com",
+        "phone": "0523344556",
+        "officePhone": "039990001",
+        "address": {
+            "street": "HaShikma",
+            "city": "Holon",
+            "houseNumber": "22"
+        },
+        "company": "BrightBee",
+        "position": "Customer Service",
+        "notes": "Handles support tickets"
+    },
+    {
+        "name": {
+            "firstName": "Tomer",
+            "middleName": "Raz",
+            "lastName": "Ben Ari"
+        },
+        "email": "tomer.benari@example.com",
+        "phone": "0542200661",
+        "officePhone": "",
+        "address": {
+            "street": "Weizmann",
+            "city": "Givatayim",
+            "houseNumber": "14"
+        },
+        "company": "Sunrise Media",
+        "position": "Marketing",
+        "notes": ""
+    },
+    {
+        "name": {
+            "firstName": "Lea",
+            "middleName": "Or",
+            "lastName": "Koren"
+        },
+        "email": "lea.koren@example.com",
+        "phone": "0587654321",
+        "officePhone": "",
+        "address": {
+            "street": "Ben Gurion",
+            "city": "Herzliya",
+            "houseNumber": "9"
+        },
+        "company": "SkyLine",
+        "position": "Developer",
+        "notes": "Frontend React dev"
+    },
+    {
+        "name": {
+            "firstName": "Nir",
+            "middleName": "",
+            "lastName": "Shani"
+        },
+        "email": "nir.shani@example.com",
+        "phone": "0528809900",
+        "officePhone": "",
+        "address": {
+            "street": "Allenby",
+            "city": "Tel Aviv",
+            "houseNumber": "32"
+        },
+        "company": "PixelArt",
+        "position": "Designer",
+        "notes": "Specializes in UI/UX"
+    },
+    {
+        "name": {
+            "firstName": "Gal",
+            "middleName": "Tomer",
+            "lastName": "Regev"
+        },
+        "email": "gal.regev@example.com",
+        "phone": "0505566778",
+        "officePhone": "",
+        "address": {
+            "street": "Hagana",
+            "city": "Beersheba",
+            "houseNumber": "15"
+        },
+        "company": "CoreLogic",
+        "position": "Accountant",
+        "notes": "Handles payroll"
+    },
+    {
+        "name": {
+            "firstName": "Roni",
+            "middleName": "",
+            "lastName": "Ben David"
+        },
+        "email": "roni.bendavid@example.com",
+        "phone": "0521122334",
+        "officePhone": "036778899",
+        "address": {
+            "street": "Herzl",
+            "city": "Rehovot",
+            "houseNumber": "27"
+        },
+        "company": "Nova Labs",
+        "position": "HR",
+        "notes": "Responsible for hiring"
+    },
+    {
+        "name": {
+            "firstName": "Shir",
+            "middleName": "Neta",
+            "lastName": "Maman"
+        },
+        "email": "shir.maman@example.com",
+        "phone": "0549988776",
+        "officePhone": "",
+        "address": {
+            "street": "HaPalmach",
+            "city": "Jerusalem",
+            "houseNumber": "30"
+        },
+        "company": "GreenTech",
+        "position": "Operations",
+        "notes": "Manages logistics"
+    },
+    {
+        "name": {
+            "firstName": "Erez",
+            "middleName": "",
+            "lastName": "Tal"
+        },
+        "email": "erez.tal@example.com",
+        "phone": "0532244668",
+        "officePhone": "",
+        "address": {
+            "street": "Sderot HaTmarim",
+            "city": "Eilat",
+            "houseNumber": "5"
+        },
+        "company": "Pulse Studio",
+        "position": "Administrator",
+        "notes": "Office management"
+    },
+    {
+        "name": {
+            "firstName": "Ofir",
+            "middleName": "Daniel",
+            "lastName": "Katz"
+        },
+        "email": "ofir.katz@example.com",
+        "phone": "0583322114",
+        "officePhone": "",
+        "address": {
+            "street": "Rothschild",
+            "city": "Tel Aviv",
+            "houseNumber": "11"
+        },
+        "company": "AlphaWave",
+        "position": "Technician",
+        "notes": "Handles equipment setup"
+    },
+    {
+        "name": {
+            "firstName": "Yarden",
+            "middleName": "Shai",
+            "lastName": "Moria"
+        },
+        "email": "yarden.moria@example.com",
+        "phone": "0506611223",
+        "officePhone": "",
+        "address": {
+            "street": "Herzl",
+            "city": "Ramat Gan",
+            "houseNumber": "19"
+        },
+        "company": "Insight Pro",
+        "position": "Consultant",
+        "notes": ""
+    },
+    {
+        "name": {
+            "firstName": "Ofek",
+            "middleName": "",
+            "lastName": "Rosen"
+        },
+        "email": "ofek.rosen@example.com",
+        "phone": "0527788991",
+        "officePhone": "",
+        "address": {
+            "street": "HaPalmach",
+            "city": "Jerusalem",
+            "houseNumber": "8"
+        },
+        "company": "Pulse CRM",
+        "position": "Intern",
+        "notes": "Summer internship"
+    },
+    {
+        "name": {
+            "firstName": "Karen",
+            "middleName": "Noa",
+            "lastName": "Amiel"
+        },
+        "email": "karen.amiel@example.com",
+        "phone": "0539900112",
+        "officePhone": "",
+        "address": {
+            "street": "Dizengoff",
+            "city": "Tel Aviv",
+            "houseNumber": "76"
+        },
+        "company": "Creative Hub",
+        "position": "Freelancer",
+        "notes": "Contract for Q3"
+    },
+    {
+        "name": {
+            "firstName": "Barak",
+            "middleName": "",
+            "lastName": "Iluz"
+        },
+        "email": "barak.iluz@example.com",
+        "phone": "0581200345",
+        "officePhone": "",
+        "address": {
+            "street": "Ben Gurion",
+            "city": "Herzliya",
+            "houseNumber": "4"
+        },
+        "company": "Nova Labs",
+        "position": "Other",
+        "notes": "Part-time"
+    },
+    {
+        "name": {
+            "firstName": "Hadar",
+            "middleName": "Eli",
+            "lastName": "Tessler"
+        },
+        "email": "hadar.tessler@example.com",
+        "phone": "0507701234",
+        "officePhone": "",
+        "address": {
+            "street": "Allenby",
+            "city": "Tel Aviv",
+            "houseNumber": "33"
+        },
+        "company": "Blue Byte",
+        "position": "Team Leader",
+        "notes": "Manages backend pod"
+    },
+    {
+        "name": {
+            "firstName": "Maayan",
+            "middleName": "Rotem",
+            "lastName": "Sharon"
+        },
+        "email": "maayan.sharon@example.com",
+        "phone": "0527711223",
+        "officePhone": "",
+        "address": {
+            "street": "Herzl",
+            "city": "Kfar Saba",
+            "houseNumber": "16"
+        },
+        "company": "FlowMotion",
+        "position": "Customer Service",
+        "notes": "Handles VIP queue"
+    },
+    {
+        "name": {
+            "firstName": "Itai",
+            "middleName": "",
+            "lastName": "Baruch"
+        },
+        "email": "itai.baruch@example.com",
+        "phone": "0506633445",
+        "officePhone": "",
+        "address": {
+            "street": "Sokolov",
+            "city": "Ramat Hasharon",
+            "houseNumber": "27"
+        },
+        "company": "GreenTech",
+        "position": "Coordinator",
+        "notes": "Coordinates onboarding"
+    },
+    {
+        "name": {
+            "firstName": "Racheli",
+            "middleName": "Orly",
+            "lastName": "Kadosh"
+        },
+        "email": "racheli.kadosh@example.com",
+        "phone": "0539988775",
+        "officePhone": "",
+        "address": {
+            "street": "Dizengoff",
+            "city": "Tel Aviv",
+            "houseNumber": "64"
+        },
+        "company": "Nova Labs",
+        "position": "Developer",
+        "notes": "Full-stack TypeScript"
+    }
+]

@@ -4,6 +4,7 @@ const db = (config.has("DB") ? config.get<string>("DB") : "MONGODB").toUpperCase
 
 import { IContact } from "../models/mongodb/Contact";
 import Contact from "../models/mongodb/Contact";
+import { ContactInput } from "../../types/contact";
 
 interface ApiError extends Error {
     status?: number;
@@ -59,7 +60,7 @@ export const findById = async (id: string) => {
     }
 };
 
-export const create = async (contact: IContact) => {
+export const create = async (contact: ContactInput): Promise<IContact> => {
     try {
         const data = { ...contact };
         let newContact = new Contact(data);

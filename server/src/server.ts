@@ -7,6 +7,7 @@ import cors from "./middlewares/cors";
 import logger from "./logger/loggerService";
 import connectToDB from "./DB/dbService";
 import config from "config";
+import { generateInitialContacts } from "./initialData/initialDataService";
 
 const app = express();
 
@@ -38,4 +39,5 @@ const PORT = config.get<number>("PORT");
 app.listen(PORT, () => {
     console.log(chalk.green(`Server is running on http://localhost:${PORT}`));
     connectToDB();
+    generateInitialContacts();
 });

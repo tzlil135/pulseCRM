@@ -1,4 +1,6 @@
-let ENV = "development";
+import config from "config";
+
+const ENV = config.get<string>("NODE_ENV") || "development";
 
 const connectToDB = () => {
     if (ENV === "development") {
