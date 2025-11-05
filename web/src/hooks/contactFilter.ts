@@ -7,7 +7,11 @@ export const filterContacts = (
 ) => {
     return contacts.filter(contact => {
         return Object.entries(activeFilter).every(([column, filter]) => {
-            if (!filter || !filter.value) return true;
+            // Skip null or undefined filters
+            if (!filter) return true;
+
+            // Skip filters with empty values
+            if (!filter.value || filter.value.trim() === '') return true;
 
             const filterValue = filter.value.toLowerCase();
 

@@ -1,7 +1,10 @@
 import cors from "cors";
+import config from "config";
+
+const allowedOrigins = config.get<string[]>("ORIGIN");
 
 const corsMiddleware = cors({
-    origin: ["http://localhost:5173"],
+    origin: allowedOrigins,
     optionsSuccessStatus: 200,
 });
 

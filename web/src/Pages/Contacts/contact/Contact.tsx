@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import { addContactSchema } from '../../../validations/addContactSchema';
 import { toast } from 'react-hot-toast';
 import { useRef } from 'react';
+import type { ClientType } from '../../../types/client';
 
 const POSITIONS = [
     "CEO", "Manager", "Team Leader", "Assistant Manager", "Coordinator",
@@ -24,31 +25,61 @@ const Contact = () => {
     if (!id) {
         return <div>Contact ID is missing</div>;
     }
-    const contact = getContactById(id);
-    if (!contact) {
-        return <div>Contact not found</div>;
-    }
+
+    const [contact, setContact] = useState<ClientType | null>(null);
+    const [loading, setLoading] = useState(true);
+    const [loadError, setLoadError] = useState<string | null>(null);
 
 
 
-    const [form, setForm] = useState(() => ({
-        name: {
-            firstName: contact.name.firstName || "",
-            middleName: contact.name.middleName || "",
-            lastName: contact.name.lastName || ""
-        },
-        email: contact.email || "",
-        phone: contact.phone || "",
-        officePhone: contact.officePhone || "",
-        address: {
-            street: contact.address.street || "",
-            city: contact.address.city || "",
-            houseNumber: String(contact.address.houseNumber ?? ""),
-        },
-        company: contact.company || "",
-        position: contact.position || "",
-        notes: contact.notes || "",
-    }));
+    const [form, setForm] = useState({
+        name: { firstName: "", middleName: "", lastName: "" },
+        email: "",
+        phone: "",
+        officePhone: "",
+        address: { street: "", city: "", houseNumber: "" },
+        company: "",
+        position: "",
+        notes: "",
+    });
+
+    useEffect(() => {
+        let cancelled = false;
+        (async () => {
+            try {
+                setLoading(true);
+                const c = await getContactById(id);
+                if (cancelled) return;
+                setContact(c);
+                setForm({
+                    name: {
+                        firstName: c.name.firstName || "",
+                        middleName: c.name.middleName || "",
+                        lastName: c.name.lastName || "",
+                    },
+                    email: c.email || "",
+                    phone: c.phone || "",
+                    officePhone: c.officePhone || "",
+                    address: {
+                        street: c.address.street || "",
+                        city: c.address.city || "",
+                        houseNumber: String(c.address.houseNumber ?? ""),
+                    },
+                    company: c.company || "",
+                    position: c.position || "",
+                    notes: c.notes || "",
+                });
+                setLoadError(null);
+            } catch (e: any) {
+                setLoadError(e?.message || "Failed to load contact");
+            } finally {
+                if (!cancelled) setLoading(false);
+            }
+        })();
+        return () => {
+            cancelled = true;
+        };
+    }, [id]);
 
     const formRef = useRef(form);
     useEffect(() => {
@@ -56,53 +87,59 @@ const Contact = () => {
     }, [form]);
 
     useEffect(() => {
-        const handleSave = () => {
-            const currentForm = formRef.current;
+        const handleSave = async () => {
+            const f = formRef.current;
             const cleanForm = {
-                ...currentForm,
+                ...f,
                 name: {
-                    ...currentForm.name,
-                    firstName: currentForm.name.firstName.trim(),
-                    middleName: (currentForm.name.middleName ?? "").trim(),
-                    lastName: currentForm.name.lastName.trim(),
+                    ...f.name,
+                    firstName: f.name.firstName.trim(),
+                    middleName: (f.name.middleName ?? "").trim(),
+                    lastName: f.name.lastName.trim(),
                 },
                 address: {
-                    ...currentForm.address,
-                    street: currentForm.address.street.trim(),
-                    city: currentForm.address.city.trim(),
-                    houseNumber: currentForm.address.houseNumber.trim(),
+                    ...f.address,
+                    street: f.address.street.trim(),
+                    city: f.address.city.trim(),
+                    houseNumber: f.address.houseNumber.trim(),
                 },
-                email: currentForm.email.trim(),
-                phone: currentForm.phone.trim(),
-                officePhone: (currentForm.officePhone ?? "").trim(),
-                company: (currentForm.company ?? "").trim(),
-                position: (currentForm.position ?? "").trim(),
-                notes: (currentForm.notes ?? "").trim(),
+                email: f.email.trim(),
+                phone: f.phone.trim(),
+                officePhone: (f.officePhone ?? "").trim(),
+                company: (f.company ?? "").trim(),
+                position: (f.position ?? "").trim(),
+                notes: (f.notes ?? "").trim(),
             };
 
             const { error } = addContactSchema.validate(cleanForm, {
                 abortEarly: false,
                 allowUnknown: true,
             });
-
             if (error) {
                 toast.error(error.details[0].message);
-                console.log("Validation failed", error.details);
                 return false;
             }
 
-            updateContact(id, cleanForm);
-            toast.success("Contact saved");
-            console.log("Saved", cleanForm);
-            return true;
+            try {
+                await updateContact(id, cleanForm);
+                toast.success("Contact saved");
+                return true;
+            } catch (e: any) {
+                toast.error(e?.message || "Save failed");
+                return false;
+            }
         };
 
         registerOnSave(handleSave);
-
         return () => registerOnSave(null);
     }, [id, registerOnSave]);
 
-    const fullname = `${form.name.firstName} ${form.name.middleName ? form.name.middleName + ' ' : ''}${form.name.lastName}`;
+    const fullname = `${form.name.firstName} ${form.name.middleName ? form.name.middleName + " " : ""}${form.name.lastName}`;
+
+    if (loading) return <div>Loading…</div>;
+    if (loadError) return <div style={{ color: "crimson" }}>{loadError}</div>;
+    if (!contact) return <div>Contact not found</div>;
+
 
     return (
         <>

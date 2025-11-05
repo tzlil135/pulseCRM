@@ -1,12 +1,12 @@
-
 import { createContext, useRef, useState, useCallback, useContext } from "react";
 
-type SaveHandler = (() => boolean) | null;
+export type SaveHandler = (() => boolean | Promise<boolean>) | null;
+
 type Ctx = {
     isEditing: boolean;
     setIsEditing: (v: boolean) => void;
     registerOnSave: (h: SaveHandler) => void;
-    callOnSave: () => boolean;
+    callOnSave: () => Promise<boolean>;
 };
 
 export const ContactEditModeContext = createContext<Ctx | null>(null);
@@ -19,12 +19,23 @@ export const ContactEditModeProvider = ({ children }: { children: React.ReactNod
         onSaveRef.current = h;
     }, []);
 
-    const callOnSave = useCallback(() => {
-        return onSaveRef.current ? onSaveRef.current() : true;
+    const callOnSave = useCallback(async (): Promise<boolean> => {
+        const fn = onSaveRef.current;
+        if (!fn) return true;
+        try {
+            const res = fn();
+            return typeof (res as any)?.then === "function"
+                ? !!(await (res as Promise<boolean>))
+                : !!(res as boolean);
+        } catch {
+            return false;
+        }
     }, []);
 
     return (
-        <ContactEditModeContext.Provider value={{ isEditing, setIsEditing, registerOnSave, callOnSave }}>
+        <ContactEditModeContext.Provider
+            value={{ isEditing, setIsEditing, registerOnSave, callOnSave }}
+        >
             {children}
         </ContactEditModeContext.Provider>
     );

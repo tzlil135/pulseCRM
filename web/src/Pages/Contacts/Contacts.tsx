@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import styles from './Contacts.module.css';
 import type { Contact, ContactTableType } from '../../types/client';
 import ContactTableButtons from '../../components/ContactTableButtons/ContactTableButtons';
@@ -15,14 +15,30 @@ import type { FilterType } from '../../types/fitchers';
 import { filterContacts } from '../../hooks/contactFilter';
 import { filterContactsGlobal } from '../../utils/filterContactsGlobal';
 import { useContactsGlobalFilterContext } from '../../contexts/ContactsGlobalFilter';
-import { getContacts } from '../../service/contactService';
+import { getContacts, deleteContact, updateContact } from '../../service/contactService';
+import type { ClientType } from '../../types/client';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useBackBtn } from '../../contexts/BackBtn';
 
 
 export type ZebraColor = 'sky-blue' | 'cotton-candy-pink' | 'light-lemon' | '';
 
+const toTableVM = (c: ClientType): ContactTableType => ({
+    id: c._id,
+    name: c.name,
+    address: c.address,
+    email: c.email,
+    phone: c.phone,
+    company: c.company ?? ''
+});
+
 const Contacts = () => {
+
+    const refresh = async () => {
+        const data = await getContacts();
+        setContacts(data.map(toTableVM));
+    };
+
 
     const readInitialListState = () => {
         const shouldRestore = sessionStorage.getItem("contacts:restoreOnce") === "1";
@@ -31,7 +47,9 @@ const Contacts = () => {
             sessionStorage.removeItem("contacts:restoreOnce");
             try {
                 const raw = sessionStorage.getItem("contacts:listState");
-                return raw ? JSON.parse(raw) : {};
+                const parsed = raw ? JSON.parse(raw) : {};
+                console.log('🔧 Restoring state:', parsed);  // ← ADD THIS
+                return parsed;
             } catch {
                 return {};
             }
@@ -57,7 +75,7 @@ const Contacts = () => {
         navigate(`/contacts/${id}`);
     };
 
-    const [contacts, setContacts] = useState<ContactTableType[]>(() => getContacts());
+    const [contacts, setContacts] = useState<ContactTableType[]>([]);
     const [checkItems, setCheckItems] = useState<{ [id: string]: boolean }>({});
     const [selectAll, setSelectAll] = useState(false);
 
@@ -98,6 +116,52 @@ const Contacts = () => {
 
     const { currentValue: globalFilter } = useContactsGlobalFilterContext();
 
+    const didFetch = useRef(false);
+
+    useEffect(() => {
+        let cancelled = false;
+
+        console.log('🚀 Starting fetch...');
+
+        getContacts()
+            .then(data => {
+                console.log('✅ Fetch complete:', data.length);
+                if (cancelled) {
+                    console.log('❌ Cancelled, not updating state');
+                    return;
+                }
+                const mapped = data.map(toTableVM);
+                console.log('✅ Setting contacts state with', mapped.length, 'items');
+                setContacts(mapped);
+            })
+            .catch(e => {
+                console.error('❌ Fetch error:', e);
+                if (!cancelled) {
+                    setContacts([]);
+                    toast.error(e?.message || 'Failed to load contacts');
+                }
+            });
+
+        return () => {
+            console.log('🧹 Cleanup called');
+            cancelled = true;
+        };
+    }, []); // Remove didFetch entirely
+
+    useEffect(() => {
+        console.log('📊 Contacts state updated:', contacts.length);
+    }, [contacts]);
+
+    useEffect(() => {
+        console.log("⬅️ from API:", contacts.length, contacts[0]);
+    }, [contacts]);
+
+    useEffect(() => {
+        console.log("🔎 filters:", activeFilter, globalFilter);
+        console.log("➡️ sortedContacts:", sortedContacts.length);
+    }, [activeFilter, globalFilter, sortedContacts]);
+
+
     const handleSort = (column: keyof ContactTableType) => {
         if (sortBy === column) {
             setIsAsc(prev => !prev);
@@ -109,14 +173,25 @@ const Contacts = () => {
     };
 
     useEffect(() => {
+        console.log('🔄 Filtering/sorting effect running...');
+        console.log('  contacts.length:', contacts.length);
+        console.log('  activeFilter:', JSON.stringify(activeFilter));
+        console.log('  globalFilter:', globalFilter);
+
         if (contacts.length === 0) {
+            console.log('  ⚠️ Contacts empty, setting sortedContacts to []');
             setSortedContacts([]);
             return;
         }
 
         const byColumns = filterContacts(contacts, activeFilter);
+        console.log('  📊 After column filter:', byColumns.length);
+
         const byGlobal = filterContactsGlobal(byColumns, globalFilter);
+        console.log('  📊 After global filter:', byGlobal.length);
+
         const sorted = sortContacts(byGlobal, sortBy, isAsc);
+        console.log('  📊 After sort:', sorted.length);
 
         setSortedContacts(sorted);
     }, [contacts, activeFilter, globalFilter, sortBy, isAsc]);
@@ -162,8 +237,6 @@ const Contacts = () => {
     const handleCheck = (id: string) => {
         if (isEditing) return;
 
-        if (isEditing) return;
-
         setCheckItems(prev => ({
             ...prev,
             [id]: !prev[id],
@@ -185,13 +258,24 @@ const Contacts = () => {
         setSelectAll(selectEverything);
     };
 
-    const onDelete = () => {
-        const newContacts = contacts.filter(contact => !checkItems[contact.id]);
-        setContacts(newContacts);
-        setCheckItems({});
-        setSelectAll(false);
-        localStorage.setItem('contacts', JSON.stringify(newContacts));
-        toast.success(`${checkedAmount} contact${checkedAmount > 1 ? 's' : ''} deleted successfully!`);
+    const onDelete = async () => {
+        if (isEditing) return;
+
+        const idsToDelete = Object.entries(checkItems)
+            .filter(([, v]) => v)
+            .map(([id]) => id);
+
+        if (idsToDelete.length === 0) return;
+
+        try {
+            await Promise.all(idsToDelete.map(id => deleteContact(id)));
+            await refresh();
+            setSelectAll(false);
+            toast.success(`${checkedAmount} contact${checkedAmount > 1 ? 's' : ''} deleted successfully!`);
+        } catch (e: any) {
+            toast.error(e?.message || 'Failed to delete contacts');
+        }
+
     };
 
     const onTag = () => {
@@ -199,8 +283,9 @@ const Contacts = () => {
         console.log('Tagging');
     };
 
-    const onEdit = () => {
+    const onEdit = async () => {
         if (isEditing) {
+            // ולידציה קיימת שלך
             for (const id in contactsToEdit) {
                 const partialContact = {
                     name: editValues[id].name,
@@ -209,7 +294,6 @@ const Contacts = () => {
                     email: editValues[id].email,
                     company: editValues[id].company,
                 };
-
                 const { error } = contactTableEditSchema.validate(partialContact, { abortEarly: false });
                 if (error) {
                     toast.error(error.details.map(err => err.message).join('\n'));
@@ -217,20 +301,32 @@ const Contacts = () => {
                 }
             }
 
-            const updatedContacts = contacts.map(contact =>
-                contactsToEdit[contact.id] ? editValues[contact.id] || contact : contact
-            );
+            try {
+                const selectedIds = Object.keys(contactsToEdit);
+                await Promise.all(
+                    selectedIds.map(id => {
+                        const c = editValues[id];
+                        return updateContact(id, {
+                            name: c.name,
+                            address: c.address,
+                            phone: c.phone,
+                            email: c.email,
+                            company: c.company,
+                        });
+                    })
+                );
 
-            setContacts(updatedContacts);
-            localStorage.setItem('contacts', JSON.stringify(updatedContacts));
-            setContactsToEdit({});
-            setEditValues({});
-            setIsEditing(false);
-            setCheckItems({});
-            setSelectAll(false);
-            toast.success('Contacts updated!');
+                await refresh();
+                setContactsToEdit({});
+                setEditValues({});
+                setIsEditing(false);
+                setCheckItems({});
+                setSelectAll(false);
+                toast.success('Contacts updated!');
+            } catch (e: any) {
+                toast.error(e?.message || 'Failed to update contacts');
+            }
         } else {
-
             const newContactsToEdit: { [key: string]: boolean } = {};
             const newEditValues: { [key: string]: Contact } = {};
 
@@ -313,9 +409,11 @@ const Contacts = () => {
     const handleFilterClick = (column: string) => {
         setActiveFilter(prev => {
             if (prev[column]) {
-                return {};
+                const newFilters = { ...prev };
+                delete newFilters[column];
+                return newFilters;
             }
-            return { [column]: { mode: 'contains', value: '' } };
+            return { ...prev, [column]: { mode: 'contains', value: '' } };
         });
     };
 

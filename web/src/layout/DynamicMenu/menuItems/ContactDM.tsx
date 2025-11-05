@@ -20,7 +20,7 @@ const ContactDM = () => {
 
     const { isEditing, setIsEditing, callOnSave } = useContactEditMode();
 
-    const handleEditOrSave = () => {
+    const handleEditOrSave = async () => {
         if (!isEditing) {
             setIsEditing(true);
             return;
@@ -28,8 +28,12 @@ const ContactDM = () => {
         if (typeof callOnSave !== "function") {
             return;
         }
-        const ok = callOnSave();
-        if (ok) setIsEditing(false);
+        const ok = await callOnSave();
+        if (ok) {
+            setIsEditing(false);
+        } else {
+            console.log("Save failed - staying in edit mode");
+        }
     };
 
     return (

@@ -20,7 +20,7 @@ export type NewClientType = {
 }
 
 export type ClientType = NewClientType & {
-    id: string;
+    _id: string;
 };
 
 export type ClientFormFieldsType = {

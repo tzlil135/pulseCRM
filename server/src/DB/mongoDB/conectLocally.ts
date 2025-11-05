@@ -8,3 +8,4 @@ mongoose.connect("mongodb://localhost:27017/pulseCRM")
     .catch((error) => {
         console.error(chalk.bgRed("Failed to connect to MongoDB locally"), error);
     });
+
