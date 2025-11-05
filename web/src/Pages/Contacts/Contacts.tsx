@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import { useEffect, useState } from 'react';
 import styles from './Contacts.module.css';
 import type { Contact, ContactTableType } from '../../types/client';
 import ContactTableButtons from '../../components/ContactTableButtons/ContactTableButtons';
@@ -115,8 +115,6 @@ const Contacts = () => {
     );
 
     const { currentValue: globalFilter } = useContactsGlobalFilterContext();
-
-    const didFetch = useRef(false);
 
     useEffect(() => {
         let cancelled = false;
