@@ -47,7 +47,7 @@ const AddEventForm = () => {
             console.log("Inside onSubmit");
             console.log(data);
             toast.success("Event added successfully!");
-            addEvent(data); // Call the service to add the event
+            addEvent(data);
         };
 
         const submitFunction = handleSubmit(onSubmit);
@@ -66,7 +66,7 @@ const AddEventForm = () => {
                         <div className={styles['details']}>
                             <div className={styles['details-content']} style={{ borderRight: '1px solid #ccc' }}>
                                 <p>Event Number</p>
-                                <p style={{ fontWeight: 'bold' }}>612345-06-25</p>
+                                <p style={{ fontWeight: 'bold' }}>---</p>
                             </div>
                             <div className={styles['details-content']} style={{ borderRight: '1px solid #ccc' }}>
                                 <p>priority</p>

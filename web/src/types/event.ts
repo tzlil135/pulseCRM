@@ -1,7 +1,7 @@
 import type { FieldErrors, UseFormRegister } from "react-hook-form";
 
 export type EventType = {
-    _id: string;
+    id: string;
     eventNumber: string;
     callerName: string;
     callerDetails?: {
@@ -52,4 +52,14 @@ export type NewEventType = {
 export type NewEventFormFieldsPropsType = {
     register: UseFormRegister<NewEventType>;
     errors: FieldErrors<NewEventType>;
+}
+
+export type EventTableType = {
+    eventNumber: string;
+    callerName: string;
+    description: string;
+    assignedTeam: string;
+    location: string;
+    id: string;
+    status: string;
 }

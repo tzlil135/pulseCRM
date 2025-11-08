@@ -4,6 +4,10 @@ import { useEffect, useState } from 'react';
 import { MdFilterListAlt } from 'react-icons/md';
 import EventTableSettings from '../../components/EventsTableSettings/EventsTableSettings';
 import { IoIosArrowRoundUp } from 'react-icons/io';
+import type { EventTableType } from '../../types/event';
+import { getEvents } from '../../service/eventService';
+import EventTableButtons from '../../components/EventTableButtons/EventTableButtons';
+import { GrFormNext, GrFormPrevious } from 'react-icons/gr';
 
 
 export type ZebraColor = 'sky-blue' | 'cotton-candy-pink' | 'light-lemon' | '';
@@ -25,12 +29,16 @@ const AvailableEvents = () => {
     const [assignedTeamColumnVisible, setAssignedTeamColumnVisible] = useState(true);
     const [locationColumnVisible, setLocationColumnVisible] = useState(true);
 
+    const [displayedEvents, setDisplayedEvents] = useState<EventTableType[]>([]);
+
+    const [checkItems, setCheckItems] = useState<{ [id: string]: boolean }>({});
+    const [eventsAmount, setEventsAmount] = useState(0);
+    const [checkedAmount, setCheckedAmount] = useState(0);
+
+    const [isEditing, setIsEditing] = useState(false);
+
     const handleActive = () => {
         setActiveEllipsis(prev => !prev);
-    };
-
-    const handleSelectAll = () => {
-        setSelectAll(prev => !prev);
     };
 
     useEffect(() => {
@@ -62,6 +70,74 @@ const AvailableEvents = () => {
             }
         }
     }, []);
+
+    useEffect(() => {
+        try {
+            const events = getEvents();
+            const allEvents = events.map(event => ({
+                eventNumber: event.eventNumber,
+                callerName: event.callerName,
+                description: event.description,
+                assignedTeam: event.assignedTeam,
+                location: `${event.location.street} ${event.location.houseNumber}, ${event.location.city}`,
+                id: event.id,
+                status: event.status
+            }));
+            const openEvents = allEvents.filter(event => event.status === 'open');
+            setDisplayedEvents(
+                openEvents
+            );
+            console.log('Loaded events:', openEvents);
+        } catch (error) {
+            console.error('Error loading events:', error);
+        }
+    }, []);
+
+    useEffect(() => {
+        setEventsAmount(displayedEvents.length);
+    }, [displayedEvents]);
+
+    const handleCheck = (id: string) => {
+        if (isEditing) return;
+
+        setCheckItems(prev => ({
+            ...prev,
+            [id]: !prev[id],
+        }));
+    };
+
+    const handleSelectAll = () => {
+        if (isEditing) return;
+
+        const allSelected = displayedEvents.length > 0 && displayedEvents.every(c => checkItems[c.id]);
+        const selectEverything = !allSelected;
+
+        const newCheckedItems: { [id: string]: boolean } = { ...checkItems };
+        displayedEvents.forEach(c => {
+            newCheckedItems[c.id] = selectEverything;
+        });
+
+        setCheckItems(newCheckedItems);
+        setSelectAll(selectEverything);
+    };
+
+    useEffect(() => {
+        const checkedCount = Object.values(checkItems).filter(v => v).length;
+        setCheckedAmount(checkedCount);
+    }, [checkItems]);
+
+    const onDelete = () => {
+        console.log('Delete action triggered');
+    }
+
+    const onTag = () => {
+        console.log('Tag action triggered');
+    }
+
+    const onEdit = () => {
+        setIsEditing(prev => !prev);
+    }
+
 
     return (
         <>
@@ -179,11 +255,162 @@ const AvailableEvents = () => {
                             </tr>
                         </thead>
                         <tbody>
-
+                            {displayedEvents.map((event, index) => (
+                                <tr
+                                    key={event.id}
+                                    className={`${styles['table-row']} ${checkItems[event.id] ? styles['row-checked'] : ''}`}
+                                >
+                                    <td className={`${styles['table-cell']}`}>
+                                        <div
+                                            className={`${styles['custom-checkbox']} ${checkItems[event.id] ? styles['checked'] : ''}`}
+                                            onClick={(e) => { e.stopPropagation(); handleCheck(event.id) }}
+                                            role="checkbox"
+                                            aria-checked={!!checkItems[event.id]}
+                                            tabIndex={0}
+                                            onKeyDown={e => {
+                                                if (e.key === 'Enter' || e.key === ' ') handleCheck(event.id);
+                                            }}
+                                            aria-label={`Select event ${event.callerName}`}
+                                        >
+                                            {checkItems[event.id] && <div className={styles['checkbox-dot']} />}
+                                        </div>
+                                    </td>
+                                    <td className={`${styles['table-cell']}`}>
+                                        {/* {contactsToEdit[contact.id] ? (
+                                            <>
+                                                <input
+                                                    className={styles['input-field']}
+                                                    type="text"
+                                                    value={editValues[contact.id]?.name.firstName || ''}
+                                                    onChange={e => handleEditChange(contact.id, 'name.firstName', e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <input
+                                                    className={styles['input-field']}
+                                                    type="text"
+                                                    value={editValues[contact.id]?.name.middleName || ''}
+                                                    onChange={e => handleEditChange(contact.id, 'name.middleName', e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <input
+                                                    className={styles['input-field']}
+                                                    type="text"
+                                                    value={editValues[contact.id]?.name.lastName || ''}
+                                                    onChange={e => handleEditChange(contact.id, 'name.lastName', e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </>
+                                        ) : (
+                                            `${contact.name.firstName} ${contact.name.middleName ?? ''} ${contact.name.lastName}`
+                                        )} */}
+                                        {event.eventNumber}
+                                    </td>
+                                    <td className={`${styles['table-cell']}`}>
+                                        {/* {contactsToEdit[contact.id] ? (
+                                            <>
+                                                <input
+                                                    className={styles['input-field']}
+                                                    type="text"
+                                                    value={editValues[contact.id]?.address.street || ''}
+                                                    onChange={e => handleEditChange(contact.id, 'address.street', e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <input
+                                                    className={styles['input-field']}
+                                                    type="text"
+                                                    value={editValues[contact.id]?.address.city || ''}
+                                                    onChange={e => handleEditChange(contact.id, 'address.city', e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <input
+                                                    className={styles['input-field']}
+                                                    type="text"
+                                                    value={editValues[contact.id]?.address.houseNumber || ''}
+                                                    onChange={e => handleEditChange(contact.id, 'address.houseNumber', e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </>
+                                        ) : (
+                                            `${contact.address.street}, ${contact.address.city}, ${contact.address.houseNumber}`
+                                        )} */}
+                                        {event.callerName}
+                                    </td>
+                                    <td className={`${styles['table-cell']} ${styles['description-col']}`}>
+                                        {/* {contactsToEdit[contact.id] ? (
+                                            <input
+                                                className={styles['input-field1']}
+                                                type="email"
+                                                value={editValues[contact.id]?.email || ''}
+                                                onChange={e => handleEditChange(contact.id, 'email', e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        ) : (
+                                            contact.email
+                                        )} */}
+                                        {event.description}
+                                    </td>
+                                    <td className={`${styles['table-cell']}} ${styles['assigned-team-col']}`}>
+                                        {/* {contactsToEdit[contact.id] ? (
+                                            <input
+                                                className={styles['input-field1']}
+                                                type="tel"
+                                                value={editValues[contact.id]?.phone || ''}
+                                                onChange={e => handleEditChange(contact.id, 'phone', e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        ) : (
+                                            contact.phone
+                                        )} */}
+                                        {event.assignedTeam}
+                                    </td>
+                                    <td className={`${styles['table-cell']}`}>
+                                        {/* {contactsToEdit[contact.id] ? (
+                                            <input
+                                                className={styles['input-field1']}
+                                                type="text"
+                                                value={editValues[contact.id]?.company || ''}
+                                                onChange={e => handleEditChange(contact.id, 'company', e.target.value)}
+                                                onClick={(e) => e.stopPropagation()}
+                                            />
+                                        ) : (
+                                            contact.company
+                                        )} */}
+                                        {event.location}
+                                    </td>
+                                </tr>
+                            ))}
                         </tbody>
 
                         <tfoot className={styles['table-footer']}>
                             <tr>
+                                <td className={styles['table-footer-cell']} style={{ textAlign: 'right' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                                            {checkedAmount > 0 && (
+                                                <EventTableButtons onDelete={onDelete} onTag={onTag} onEdit={onEdit} isEditing={isEditing} />
+                                            )}
+                                            <span>
+                                                Selected {checkedAmount} out of {eventsAmount}
+                                            </span>
+                                        </div>
+                                        <div className={styles['pagination']}>
+                                            <span className={styles['pagination-info']}>
+                                                <button onClick={() => { }}>
+                                                    <GrFormPrevious />
+                                                </button>
+                                                {`${0} of ${0}`}
+                                                <button onClick={() => { }}>
+                                                    <GrFormNext />
+                                                </button>
+                                            </span>
+                                            <select value={0} onChange={(e) => { }}>
+                                                <option value={5}>5</option>
+                                                <option value={10}>10</option>
+                                                <option value={20}>20</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </td>
                             </tr>
                         </tfoot>
                     </table>

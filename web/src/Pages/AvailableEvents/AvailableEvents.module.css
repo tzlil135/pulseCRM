@@ -1,12 +1,3 @@
-.table-container {
-    height: 400px;
-    width: 100%;
-}
-
-.table-title {
-    margin-bottom: 20px;
-}
-
 :root {
     --pink-color: #ff5d9e;
     --blue-color: #007bff;
@@ -57,6 +48,7 @@ thead {
     table-layout: fixed;
 }
 
+
 tbody tr {
     display: table;
     width: 100%;
@@ -79,16 +71,15 @@ td.description-col {
     width: 30%;
 }
 
-th.event-number-col,
-td.event-number-col {
-    width: 15%;
-}
-
 .table-cell {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
     padding: 15px 10px;
+}
+
+.assigned-team-col {
+    padding-left: 10px;
 }
 
 .table-header-title {

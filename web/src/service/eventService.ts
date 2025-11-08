@@ -1,4 +1,4 @@
-import type { EventType, NewEventType, } from "../types/event";
+import type { EventTableType, EventType, NewEventType, } from "../types/event";
 
 export const addEvent = (event: NewEventType): EventType => {
     const events: EventType[] = JSON.parse(localStorage.getItem("events") || "[]");
@@ -13,11 +13,11 @@ export const addEvent = (event: NewEventType): EventType => {
 
     const startTime = new Date().toISOString();
 
-    const _id = String(Date.now() * 1000 + Math.floor(Math.random() * 1000));
+    const id = String(Date.now() * 1000 + Math.floor(Math.random() * 1000));
 
     const newEvent: EventType = {
         ...event,
-        _id,
+        id,
         eventNumber,
         startTime,
         status: 'open',
@@ -25,4 +25,9 @@ export const addEvent = (event: NewEventType): EventType => {
     events.push(newEvent);
     localStorage.setItem('events', JSON.stringify(events));
     return newEvent;
+};
+
+export const getEvents = (): EventType[] => {
+    const events: EventType[] = JSON.parse(localStorage.getItem("events") || "[]");
+    return events;
 };

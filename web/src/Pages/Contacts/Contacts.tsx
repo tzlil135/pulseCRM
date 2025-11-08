@@ -257,7 +257,6 @@ const Contacts = () => {
 
     const onEdit = async () => {
         if (isEditing) {
-            // ולידציה קיימת שלך
             for (const id in contactsToEdit) {
                 const partialContact = {
                     name: editValues[id].name,
