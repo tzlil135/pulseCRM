@@ -123,17 +123,13 @@ const Contacts = () => {
 
         getContacts()
             .then(data => {
-                console.log('✅ Fetch complete:', data.length);
                 if (cancelled) {
-                    console.log('❌ Cancelled, not updating state');
                     return;
                 }
                 const mapped = data.map(toTableVM);
-                console.log('✅ Setting contacts state with', mapped.length, 'items');
                 setContacts(mapped);
             })
             .catch(e => {
-                console.error('❌ Fetch error:', e);
                 if (!cancelled) {
                     setContacts([]);
                     toast.error(e?.message || 'Failed to load contacts');
@@ -141,23 +137,9 @@ const Contacts = () => {
             });
 
         return () => {
-            console.log('🧹 Cleanup called');
             cancelled = true;
         };
-    }, []); // Remove didFetch entirely
-
-    useEffect(() => {
-        console.log('📊 Contacts state updated:', contacts.length);
-    }, [contacts]);
-
-    useEffect(() => {
-        console.log("⬅️ from API:", contacts.length, contacts[0]);
-    }, [contacts]);
-
-    useEffect(() => {
-        console.log("🔎 filters:", activeFilter, globalFilter);
-        console.log("➡️ sortedContacts:", sortedContacts.length);
-    }, [activeFilter, globalFilter, sortedContacts]);
+    }, []);
 
 
     const handleSort = (column: keyof ContactTableType) => {
@@ -171,25 +153,17 @@ const Contacts = () => {
     };
 
     useEffect(() => {
-        console.log('🔄 Filtering/sorting effect running...');
-        console.log('  contacts.length:', contacts.length);
-        console.log('  activeFilter:', JSON.stringify(activeFilter));
-        console.log('  globalFilter:', globalFilter);
 
         if (contacts.length === 0) {
-            console.log('  ⚠️ Contacts empty, setting sortedContacts to []');
             setSortedContacts([]);
             return;
         }
 
         const byColumns = filterContacts(contacts, activeFilter);
-        console.log('  📊 After column filter:', byColumns.length);
 
         const byGlobal = filterContactsGlobal(byColumns, globalFilter);
-        console.log('  📊 After global filter:', byGlobal.length);
 
         const sorted = sortContacts(byGlobal, sortBy, isAsc);
-        console.log('  📊 After sort:', sorted.length);
 
         setSortedContacts(sorted);
     }, [contacts, activeFilter, globalFilter, sortBy, isAsc]);

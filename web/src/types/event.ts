@@ -1,11 +1,10 @@
 import type { FieldErrors, UseFormRegister } from "react-hook-form";
 
-export type EventStatus = 'opened' | 'closed' | 'in-progress' | 'overdue';
-
 export type EventType = {
-    id: string;
+    _id: string;
+    eventNumber: string;
     callerName: string;
-    callerDetails: {
+    callerDetails?: {
         phone: string;
         email: string;
         location: {
@@ -14,9 +13,9 @@ export type EventType = {
             houseNumber: string;
         };
     }
-    status: EventStatus;
+    status: 'open' | 'closed' | 'in-progress' | 'overdue';
     startTime: string;
-    endTime: string;
+    endTime?: string;
     description: string;
     location: {
         city: string;
@@ -25,9 +24,13 @@ export type EventType = {
     };
     assignedTeam: string;
     subject: string;
-    subSubject: string;
-    createdBy: string;
-    timeLine: string[];
+    subSubject?: string;
+    createdBy?: string;
+    timeLine?: {
+        timestamp: string;
+        user: string;
+        action: string;
+    }[];
     resolvation?: string;
 }
 

@@ -14,6 +14,7 @@ import { useEffect } from "react";
 import { addEvent } from "../../service/eventService";
 import toast, { Toaster } from "react-hot-toast";
 
+
 const AddEventForm = () => {
 
     const { setSubmitFormFn } = useFormSubmitContext();
@@ -83,7 +84,7 @@ const AddEventForm = () => {
                                     <option value="email">Email</option>
                                     <option value="other">Other</option>
                                 </select>
-                            </ div>
+                            </div>
                         </div>
                     </div>
                     <div className={styles['form-header-bottom']}>
