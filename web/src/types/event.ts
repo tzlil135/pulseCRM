@@ -59,7 +59,11 @@ export type EventTableType = {
     callerName: string;
     description: string;
     assignedTeam: string;
-    location: string;
+    location: {
+        city: string;
+        street: string;
+        houseNumber: string;
+    };
     id: string;
     status: string;
 }

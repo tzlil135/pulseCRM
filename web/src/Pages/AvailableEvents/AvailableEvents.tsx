@@ -4,16 +4,31 @@ import { useEffect, useState } from 'react';
 import { MdFilterListAlt } from 'react-icons/md';
 import EventTableSettings from '../../components/EventsTableSettings/EventsTableSettings';
 import { IoIosArrowRoundUp } from 'react-icons/io';
-import type { EventTableType } from '../../types/event';
+import type { EventTableType, EventType } from '../../types/event';
 import { getEvents } from '../../service/eventService';
 import EventTableButtons from '../../components/EventTableButtons/EventTableButtons';
 import { GrFormNext, GrFormPrevious } from 'react-icons/gr';
-
 
 export type ZebraColor = 'sky-blue' | 'cotton-candy-pink' | 'light-lemon' | '';
 
 
 const AvailableEvents = () => {
+
+    const readInitialEventsListState = () => {
+        const shouldRestore = sessionStorage.getItem("events:restoreOnce") === "1";
+        if (shouldRestore) {
+            sessionStorage.removeItem("events:restoreOnce");
+            try {
+                const raw = sessionStorage.getItem("events:listState");
+                const parsed = raw ? JSON.parse(raw) : {};
+                return parsed;
+            } catch {
+                return {};
+            }
+        }
+        sessionStorage.removeItem("events:listState");
+        return {};
+    };
 
     const [selectAll, setSelectAll] = useState(false);
 
@@ -23,19 +38,29 @@ const AvailableEvents = () => {
     const [isZebraStripingEnabled, setIsZebraStripingEnabled] = useState(false);
     const [zebraStripingColor, setZebraStripingColor] = useState<ZebraColor>('');
 
-    const [eventNumberColumnVisible, setEventNumberColumnVisible] = useState(true);
     const [callerNameColumnVisible, setCallerNameColumnVisible] = useState(true);
     const [descriptionColumnVisible, setDescriptionColumnVisible] = useState(true);
     const [assignedTeamColumnVisible, setAssignedTeamColumnVisible] = useState(true);
     const [locationColumnVisible, setLocationColumnVisible] = useState(true);
 
     const [displayedEvents, setDisplayedEvents] = useState<EventTableType[]>([]);
+    const [allEvents, setAllEvents] = useState<EventTableType[]>([]);
+    const [visibleEvents, setVisibleEvents] = useState<EventTableType[]>([]);
 
     const [checkItems, setCheckItems] = useState<{ [id: string]: boolean }>({});
     const [eventsAmount, setEventsAmount] = useState(0);
     const [checkedAmount, setCheckedAmount] = useState(0);
 
     const [isEditing, setIsEditing] = useState(false);
+
+    const initial = readInitialEventsListState();
+
+    const [rowsPerPage, setRowsPerPage] = useState<number>(() => initial.rowsPerPage ?? 10);
+    const [currentPage, setCurrentPage] = useState<number>(() => initial.page ?? 1);
+
+    const totalPages = Math.max(1, Math.ceil(visibleEvents.length / rowsPerPage));
+
+
 
     const handleActive = () => {
         setActiveEllipsis(prev => !prev);
@@ -49,7 +74,6 @@ const AvailableEvents = () => {
                     isColumnResizingEnabled,
                     isZebraStripingEnabled,
                     zebraStripingColor,
-                    eventNumberColumnVisible,
                     callerNameColumnVisible,
                     descriptionColumnVisible,
                     assignedTeamColumnVisible,
@@ -59,7 +83,6 @@ const AvailableEvents = () => {
                 setIsColumnResizingEnabled(isColumnResizingEnabled);
                 setIsZebraStripingEnabled(isZebraStripingEnabled);
                 setZebraStripingColor(zebraStripingColor);
-                setEventNumberColumnVisible(eventNumberColumnVisible);
                 setCallerNameColumnVisible(callerNameColumnVisible);
                 setDescriptionColumnVisible(descriptionColumnVisible);
                 setAssignedTeamColumnVisible(assignedTeamColumnVisible);
@@ -72,30 +95,54 @@ const AvailableEvents = () => {
     }, []);
 
     useEffect(() => {
-        try {
-            const events = getEvents();
-            const allEvents = events.map(event => ({
-                eventNumber: event.eventNumber,
-                callerName: event.callerName,
-                description: event.description,
-                assignedTeam: event.assignedTeam,
-                location: `${event.location.street} ${event.location.houseNumber}, ${event.location.city}`,
-                id: event.id,
-                status: event.status
-            }));
-            const openEvents = allEvents.filter(event => event.status === 'open');
-            setDisplayedEvents(
-                openEvents
-            );
-            console.log('Loaded events:', openEvents);
-        } catch (error) {
-            console.error('Error loading events:', error);
-        }
+        const fetchEvents = async () => {
+            try {
+                const data = await getEvents();
+                const mapped = data.map((event: EventType) => ({
+                    id: event.id,
+                    eventNumber: event.eventNumber,
+                    callerName: event.callerName,
+                    description: event.description,
+                    assignedTeam: event.assignedTeam,
+                    location: {
+                        city: event.location.city,
+                        street: event.location.street,
+                        houseNumber: event.location.houseNumber,
+                    },
+                    status: event.status,
+                }));
+
+                setAllEvents(mapped);
+            } catch (error) {
+                console.error('Error loading events:', error);
+                setAllEvents([]);
+            }
+        };
+
+        fetchEvents();
     }, []);
 
     useEffect(() => {
-        setEventsAmount(displayedEvents.length);
-    }, [displayedEvents]);
+        const openEvents = allEvents.filter(e => e.status === 'open');
+        setVisibleEvents(openEvents);
+    }, [allEvents]);
+
+    useEffect(() => {
+        const total = Math.max(1, Math.ceil(visibleEvents.length / rowsPerPage));
+        if (currentPage > total) setCurrentPage(total);
+
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const pageEvents = visibleEvents.slice(start, end);
+
+        setDisplayedEvents(pageEvents);
+    }, [visibleEvents, currentPage, rowsPerPage]);
+
+    useEffect(() => {
+        setEventsAmount(visibleEvents.length);
+    }, [visibleEvents]);
+
+
 
     const handleCheck = (id: string) => {
         if (isEditing) return;
@@ -138,6 +185,14 @@ const AvailableEvents = () => {
         setIsEditing(prev => !prev);
     }
 
+    const handlePreviousPage = () => {
+        setCurrentPage(prev => Math.max(prev - 1, 1));
+    };
+
+    const handleNextPage = () => {
+        setCurrentPage(prev => Math.min(prev + 1, totalPages));
+    };
+
 
     return (
         <>
@@ -157,8 +212,6 @@ const AvailableEvents = () => {
                                     setIsZebraStripingEnabled={setIsZebraStripingEnabled}
                                     zebraStripingColor={zebraStripingColor}
                                     setZebraStripingColor={setZebraStripingColor}
-                                    eventNumberColumnVisible={eventNumberColumnVisible}
-                                    setEventNumberColumnVisible={setEventNumberColumnVisible}
                                     callerNameColumnVisible={callerNameColumnVisible}
                                     setCallerNameColumnVisible={setCallerNameColumnVisible}
                                     descriptionColumnVisible={descriptionColumnVisible}
@@ -375,7 +428,7 @@ const AvailableEvents = () => {
                                         ) : (
                                             contact.company
                                         )} */}
-                                        {event.location}
+                                        {`${event.location.street}, ${event.location.city}, ${event.location.houseNumber}`}
                                     </td>
                                 </tr>
                             ))}
@@ -395,15 +448,15 @@ const AvailableEvents = () => {
                                         </div>
                                         <div className={styles['pagination']}>
                                             <span className={styles['pagination-info']}>
-                                                <button onClick={() => { }}>
+                                                <button onClick={handlePreviousPage}>
                                                     <GrFormPrevious />
                                                 </button>
-                                                {`${0} of ${0}`}
-                                                <button onClick={() => { }}>
+                                                {`${currentPage} of ${totalPages}`}
+                                                <button onClick={handleNextPage}>
                                                     <GrFormNext />
                                                 </button>
                                             </span>
-                                            <select value={0} onChange={(e) => { }}>
+                                            <select value={rowsPerPage} onChange={e => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}>
                                                 <option value={5}>5</option>
                                                 <option value={10}>10</option>
                                                 <option value={20}>20</option>

@@ -13,9 +13,6 @@ type EventTableSettingsProps = {
     zebraStripingColor: ZebraColor;
     setZebraStripingColor: Dispatch<SetStateAction<ZebraColor>>;
 
-    eventNumberColumnVisible: boolean;
-    setEventNumberColumnVisible: (value: boolean) => void;
-
     callerNameColumnVisible: boolean;
     setCallerNameColumnVisible: (value: boolean) => void;
 
@@ -41,9 +38,6 @@ const EventTableSettings = ({
     zebraStripingColor,
     setZebraStripingColor,
 
-    eventNumberColumnVisible,
-    setEventNumberColumnVisible,
-
     callerNameColumnVisible,
     setCallerNameColumnVisible,
 
@@ -64,7 +58,6 @@ const EventTableSettings = ({
             isColumnResizingEnabled,
             isZebraStripingEnabled,
             zebraStripingColor,
-            eventNumberColumnVisible,
             callerNameColumnVisible,
             descriptionColumnVisible,
             assignedTeamColumnVisible,
@@ -146,14 +139,6 @@ const EventTableSettings = ({
                     <span className={styles['form-label-title']}>Manage columns</span>
                     <div className={styles['form-label-columns']}>
 
-                        <label className={styles['form-label-column']}>
-                            <input
-                                type="checkbox"
-                                checked={eventNumberColumnVisible}
-                                onChange={e => setEventNumberColumnVisible(e.target.checked)}
-                            />
-                            <span>Event Number</span>
-                        </label>
 
                         <label className={styles['form-label-column']}>
                             <input
