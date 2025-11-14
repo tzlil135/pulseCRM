@@ -67,3 +67,8 @@ export type EventTableType = {
     id: string;
     status: string;
 }
+
+export type ResolvedEvent = EventType & {
+    status: 'closed';
+    resolvation: string;
+};

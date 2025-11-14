@@ -5,14 +5,52 @@ import { MdFilterListAlt } from 'react-icons/md';
 import EventTableSettings from '../../components/EventsTableSettings/EventsTableSettings';
 import { IoIosArrowRoundUp } from 'react-icons/io';
 import type { EventTableType, EventType } from '../../types/event';
-import { getEvents } from '../../service/eventService';
+import { getEvents, updateEvent } from '../../service/eventService';
 import EventTableButtons from '../../components/EventTableButtons/EventTableButtons';
 import { GrFormNext, GrFormPrevious } from 'react-icons/gr';
+import { eventTableEditSchema } from '../../validations/eventTableEditSchema';
+import toast from 'react-hot-toast';
+import EventResolvationModal from '../../components/modals/EventResolvationModal/EventResolvationModal';
+import { resolveEventSchema } from '../../validations/resolveEventSchema';
 
 export type ZebraColor = 'sky-blue' | 'cotton-candy-pink' | 'light-lemon' | '';
 
+const toTableVM = (c: EventType): EventTableType => ({
+    id: c.id,
+    eventNumber: c.eventNumber,
+    callerName: c.callerName,
+    description: c.description,
+    assignedTeam: c.assignedTeam,
+    location: {
+        city: c.location.city,
+        street: c.location.street,
+        houseNumber: c.location.houseNumber,
+    },
+    status: c.status,
+});
+
 
 const AvailableEvents = () => {
+
+    const [events, setEvents] = useState<EventTableType[]>([]);
+
+    const refresh = async () => {
+        try {
+            const data = await getEvents();
+            const mapped = data.map(toTableVM);
+            setAllEvents(mapped);
+            setEvents(mapped);
+        } catch (e) {
+            console.error('Error loading events:', e);
+            setAllEvents([]);
+        }
+    };
+
+    useEffect(() => {
+        refresh();
+    }, []);
+
+
 
     const readInitialEventsListState = () => {
         const shouldRestore = sessionStorage.getItem("events:restoreOnce") === "1";
@@ -52,6 +90,8 @@ const AvailableEvents = () => {
     const [checkedAmount, setCheckedAmount] = useState(0);
 
     const [isEditing, setIsEditing] = useState(false);
+    const [eventsToEdit, setEventsToEdit] = useState<{ [key: string]: boolean }>({});
+    const [eventEditValues, setEventEditValues] = useState<{ [key: string]: EventTableType }>({});
 
     const initial = readInitialEventsListState();
 
@@ -60,6 +100,10 @@ const AvailableEvents = () => {
 
     const totalPages = Math.max(1, Math.ceil(visibleEvents.length / rowsPerPage));
 
+    const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
+    const [resolveText, setResolveText] = useState('');
+    const [idsToResolve, setIdsToResolve] = useState<string[]>([]);
+    const [resolveError, setResolveError] = useState<string | null>(null);
 
 
     const handleActive = () => {
@@ -92,34 +136,6 @@ const AvailableEvents = () => {
                 console.error('Invalid settings in localStorage', e);
             }
         }
-    }, []);
-
-    useEffect(() => {
-        const fetchEvents = async () => {
-            try {
-                const data = await getEvents();
-                const mapped = data.map((event: EventType) => ({
-                    id: event.id,
-                    eventNumber: event.eventNumber,
-                    callerName: event.callerName,
-                    description: event.description,
-                    assignedTeam: event.assignedTeam,
-                    location: {
-                        city: event.location.city,
-                        street: event.location.street,
-                        houseNumber: event.location.houseNumber,
-                    },
-                    status: event.status,
-                }));
-
-                setAllEvents(mapped);
-            } catch (error) {
-                console.error('Error loading events:', error);
-                setAllEvents([]);
-            }
-        };
-
-        fetchEvents();
     }, []);
 
     useEffect(() => {
@@ -173,17 +189,161 @@ const AvailableEvents = () => {
         setCheckedAmount(checkedCount);
     }, [checkItems]);
 
-    const onDelete = () => {
-        console.log('Delete action triggered');
-    }
+    const onResolve = () => {
+        const selectedIds = Object.keys(checkItems).filter(id => checkItems[id]);
+
+        if (selectedIds.length === 0) {
+            toast.error('No events selected');
+            return;
+        }
+
+        setIdsToResolve(selectedIds);
+        setResolveText('');
+        setResolveError(null);
+        setIsResolveModalOpen(true);
+    };
+
+    const handleConfirmResolve = async () => {
+        const { error } = resolveEventSchema.validate(
+            { resolvation: resolveText },
+            { abortEarly: false }
+        );
+
+        if (error) {
+            setResolveError(error.details[0].message);
+            return;
+        }
+
+        setResolveError(null);
+
+        try {
+            await Promise.all(
+                idsToResolve.map(id =>
+                    updateEvent(id, {
+                        status: 'closed',
+                        resolvation: resolveText,
+                    })
+                )
+            );
+
+            const resolvedCount = idsToResolve.length;
+
+            await refresh();
+
+            if (resolvedCount === 1) {
+                toast.success('Event resolved!');
+            } else {
+                toast.success(`${resolvedCount} events resolved!`);
+            }
+
+            setCheckItems({});
+            setSelectAll(false);
+            setEventsToEdit({});
+            setEventEditValues({});
+            setIsEditing(false);
+
+            setIsResolveModalOpen(false);
+            setIdsToResolve([]);
+            setResolveText('');
+        } catch (e: any) {
+            toast.error(e?.message || 'Failed to resolve events');
+        }
+    };
+
+    const handleCancelResolve = () => {
+        setIsResolveModalOpen(false);
+        setIdsToResolve([]);
+        setResolveText('');
+        setResolveError(null);
+    };
+
 
     const onTag = () => {
         console.log('Tag action triggered');
     }
 
-    const onEdit = () => {
-        setIsEditing(prev => !prev);
-    }
+    const onEdit = async () => {
+        if (isEditing) {
+            for (const id in eventsToEdit) {
+                const e = eventEditValues[id];
+
+                const partialEvent = {
+                    callerName: e.callerName,
+                    description: e.description,
+                    assignedTeam: e.assignedTeam,
+                    location: {
+                        city: e.location.city,
+                        street: e.location.street,
+                        houseNumber: e.location.houseNumber,
+                    },
+                };
+
+                const { error } = eventTableEditSchema.validate(partialEvent, { abortEarly: false });
+                if (error) {
+                    toast.error(error.details.map(err => err.message).join('\n'));
+                    return;
+                }
+            }
+
+            try {
+                const selectedIds = Object.keys(eventsToEdit);
+
+                await Promise.all(
+                    selectedIds.map(id => {
+                        const e = eventEditValues[id];
+                        return updateEvent(id, {
+                            callerName: e.callerName,
+                            description: e.description,
+                            assignedTeam: e.assignedTeam,
+                            location: e.location,
+                        });
+                    })
+                );
+
+                await refresh();
+
+                setEventsToEdit({});
+                setEventEditValues({});
+                setIsEditing(false);
+                setCheckItems({});
+                setSelectAll(false);
+
+                toast.success('Events updated!');
+            } catch (e: any) {
+                toast.error(e?.message || 'Failed to update events');
+            }
+        } else {
+            const newEventsToEdit: { [key: string]: boolean } = {};
+            const newEventEditValues: { [key: string]: EventTableType } = {};
+
+            visibleEvents.forEach(event => {
+                if (checkItems[event.id]) {
+                    newEventsToEdit[event.id] = true;
+                    newEventEditValues[event.id] = { ...event };
+                }
+            });
+
+            setEventsToEdit(newEventsToEdit);
+            setEventEditValues(newEventEditValues);
+            setIsEditing(true);
+        }
+    };
+
+    const handleEditChange = (id: string, fieldPath: string, value: string) => {
+        setEventEditValues(prev => {
+            const updated = { ...prev };
+            const eventCopy = { ...updated[id] };
+            const keys = fieldPath.split('.');
+            let obj: any = eventCopy;
+            for (let i = 0; i < keys.length - 1; i++) {
+                obj[keys[i]] = { ...obj[keys[i]] };
+                obj = obj[keys[i]];
+            }
+            obj[keys[keys.length - 1]] = value;
+            updated[id] = eventCopy;
+            return updated;
+        });
+    };
 
     const handlePreviousPage = () => {
         setCurrentPage(prev => Math.max(prev - 1, 1));
@@ -329,106 +489,77 @@ const AvailableEvents = () => {
                                         </div>
                                     </td>
                                     <td className={`${styles['table-cell']}`}>
-                                        {/* {contactsToEdit[contact.id] ? (
-                                            <>
-                                                <input
-                                                    className={styles['input-field']}
-                                                    type="text"
-                                                    value={editValues[contact.id]?.name.firstName || ''}
-                                                    onChange={e => handleEditChange(contact.id, 'name.firstName', e.target.value)}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                />
-                                                <input
-                                                    className={styles['input-field']}
-                                                    type="text"
-                                                    value={editValues[contact.id]?.name.middleName || ''}
-                                                    onChange={e => handleEditChange(contact.id, 'name.middleName', e.target.value)}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                />
-                                                <input
-                                                    className={styles['input-field']}
-                                                    type="text"
-                                                    value={editValues[contact.id]?.name.lastName || ''}
-                                                    onChange={e => handleEditChange(contact.id, 'name.lastName', e.target.value)}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                />
-                                            </>
-                                        ) : (
-                                            `${contact.name.firstName} ${contact.name.middleName ?? ''} ${contact.name.lastName}`
-                                        )} */}
                                         {event.eventNumber}
                                     </td>
                                     <td className={`${styles['table-cell']}`}>
-                                        {/* {contactsToEdit[contact.id] ? (
+                                        {eventsToEdit[event.id] ? (
                                             <>
                                                 <input
                                                     className={styles['input-field']}
                                                     type="text"
-                                                    value={editValues[contact.id]?.address.street || ''}
-                                                    onChange={e => handleEditChange(contact.id, 'address.street', e.target.value)}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                />
-                                                <input
-                                                    className={styles['input-field']}
-                                                    type="text"
-                                                    value={editValues[contact.id]?.address.city || ''}
-                                                    onChange={e => handleEditChange(contact.id, 'address.city', e.target.value)}
-                                                    onClick={(e) => e.stopPropagation()}
-                                                />
-                                                <input
-                                                    className={styles['input-field']}
-                                                    type="text"
-                                                    value={editValues[contact.id]?.address.houseNumber || ''}
-                                                    onChange={e => handleEditChange(contact.id, 'address.houseNumber', e.target.value)}
+                                                    value={eventEditValues[event.id]?.callerName || ''}
+                                                    onChange={e => handleEditChange(event.id, 'callerName', e.target.value)}
                                                     onClick={(e) => e.stopPropagation()}
                                                 />
                                             </>
                                         ) : (
-                                            `${contact.address.street}, ${contact.address.city}, ${contact.address.houseNumber}`
-                                        )} */}
-                                        {event.callerName}
+                                            event.callerName
+                                        )}
                                     </td>
                                     <td className={`${styles['table-cell']} ${styles['description-col']}`}>
-                                        {/* {contactsToEdit[contact.id] ? (
+                                        {eventsToEdit[event.id] ? (
                                             <input
-                                                className={styles['input-field1']}
+                                                className={styles['input-field']}
                                                 type="email"
-                                                value={editValues[contact.id]?.email || ''}
-                                                onChange={e => handleEditChange(contact.id, 'email', e.target.value)}
+                                                value={eventEditValues[event.id]?.description || ''}
+                                                onChange={e => handleEditChange(event.id, 'description', e.target.value)}
                                                 onClick={(e) => e.stopPropagation()}
                                             />
                                         ) : (
-                                            contact.email
-                                        )} */}
-                                        {event.description}
+                                            event.description
+                                        )}
                                     </td>
                                     <td className={`${styles['table-cell']}} ${styles['assigned-team-col']}`}>
-                                        {/* {contactsToEdit[contact.id] ? (
+                                        {eventsToEdit[event.id] ? (
                                             <input
-                                                className={styles['input-field1']}
+                                                className={styles['input-field']}
                                                 type="tel"
-                                                value={editValues[contact.id]?.phone || ''}
-                                                onChange={e => handleEditChange(contact.id, 'phone', e.target.value)}
+                                                value={eventEditValues[event.id]?.assignedTeam || ''}
+                                                onChange={e => handleEditChange(event.id, 'assignedTeam', e.target.value)}
                                                 onClick={(e) => e.stopPropagation()}
                                             />
                                         ) : (
-                                            contact.phone
-                                        )} */}
-                                        {event.assignedTeam}
+                                            event.assignedTeam
+                                        )}
                                     </td>
                                     <td className={`${styles['table-cell']}`}>
-                                        {/* {contactsToEdit[contact.id] ? (
-                                            <input
-                                                className={styles['input-field1']}
-                                                type="text"
-                                                value={editValues[contact.id]?.company || ''}
-                                                onChange={e => handleEditChange(contact.id, 'company', e.target.value)}
-                                                onClick={(e) => e.stopPropagation()}
-                                            />
+                                        {eventsToEdit[event.id] ? (
+                                            <>
+                                                <input
+                                                    className={styles['input-field1']}
+                                                    type="text"
+                                                    value={eventEditValues[event.id]?.location.street || ''}
+                                                    onChange={e => handleEditChange(event.id, 'location.street', e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <input
+                                                    className={styles['input-field1']}
+                                                    type="text"
+                                                    value={eventEditValues[event.id]?.location.city || ''}
+                                                    onChange={e => handleEditChange(event.id, 'location.city', e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                                <input
+                                                    className={styles['input-field1']}
+                                                    type="text"
+                                                    value={eventEditValues[event.id]?.location.houseNumber || ''}
+                                                    onChange={e => handleEditChange(event.id, 'location.houseNumber', e.target.value)}
+                                                    onClick={(e) => e.stopPropagation()}
+                                                />
+                                            </>
                                         ) : (
-                                            contact.company
-                                        )} */}
-                                        {`${event.location.street}, ${event.location.city}, ${event.location.houseNumber}`}
+                                            `${event.location.street}, ${event.location.city}, ${event.location.houseNumber}`
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -440,7 +571,7 @@ const AvailableEvents = () => {
                                     <div style={{ display: 'flex', justifyContent: 'space-between', width: '100%', alignItems: 'center' }}>
                                         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
                                             {checkedAmount > 0 && (
-                                                <EventTableButtons onDelete={onDelete} onTag={onTag} onEdit={onEdit} isEditing={isEditing} />
+                                                <EventTableButtons onResolve={onResolve} onTag={onTag} onEdit={onEdit} isEditing={isEditing} />
                                             )}
                                             <span>
                                                 Selected {checkedAmount} out of {eventsAmount}
@@ -469,6 +600,17 @@ const AvailableEvents = () => {
                     </table>
                 </div>
             </div>
+            <EventResolvationModal
+                isOpen={isResolveModalOpen}
+                value={resolveText}
+                onChange={(value) => {
+                    setResolveText(value);
+                    if (resolveError) setResolveError(null);
+                }}
+                onConfirm={handleConfirmResolve}
+                onCancel={handleCancelResolve}
+                error={resolveError}
+            />
         </>
     );
 }

@@ -1,4 +1,4 @@
-import type { EventTableType, EventType, NewEventType, } from "../types/event";
+import type { EventType, NewEventType, } from "../types/event";
 
 export const addEvent = (event: NewEventType): EventType => {
     const events: EventType[] = JSON.parse(localStorage.getItem("events") || "[]");
@@ -31,3 +31,36 @@ export const getEvents = (): EventType[] => {
     const events: EventType[] = JSON.parse(localStorage.getItem("events") || "[]");
     return events;
 };
+
+export const updateEvent = (id: string, updates: Partial<EventType>): EventType => {
+    const events: EventType[] = JSON.parse(localStorage.getItem("events") || "[]");
+
+    const eventIndex = events.findIndex(event => event.id === id);
+    if (eventIndex === -1) {
+        throw new Error("Event not found");
+    }
+
+    const currentEvent = events[eventIndex];
+
+    const protectedFields = {
+        id: currentEvent.id,
+        eventNumber: currentEvent.eventNumber,
+        startTime: currentEvent.startTime,
+    }
+
+    const updatedEvent: EventType = {
+        ...currentEvent,
+        ...updates,
+        ...protectedFields,
+    };
+
+    events[eventIndex] = updatedEvent;
+
+    localStorage.setItem("events", JSON.stringify(events));
+
+    return updatedEvent;
+};
+
+export const deleteEvent = (id: string): void => {
+
+}

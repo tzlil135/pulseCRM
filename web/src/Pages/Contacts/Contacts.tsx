@@ -34,6 +34,8 @@ const toTableVM = (c: ClientType): ContactTableType => ({
 
 const Contacts = () => {
 
+    const [contacts, setContacts] = useState<ContactTableType[]>([]);
+
     const refresh = async () => {
         const data = await getContacts();
         setContacts(data.map(toTableVM));
@@ -75,7 +77,7 @@ const Contacts = () => {
         navigate(`/contacts/${id}`);
     };
 
-    const [contacts, setContacts] = useState<ContactTableType[]>([]);
+
     const [checkItems, setCheckItems] = useState<{ [id: string]: boolean }>({});
     const [selectAll, setSelectAll] = useState(false);
 

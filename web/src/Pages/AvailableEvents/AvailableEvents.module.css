@@ -167,14 +167,14 @@ td.description-col {
     border: 1px solid #ccc;
     border-radius: 4px;
     padding: 8px;
-    width: 33%;
+    width: 90%;
 }
 
 .input-field1 {
     border: 1px solid #ccc;
     border-radius: 4px;
     padding: 8px;
-    width: 100%;
+    width: 33%;
 }
 
 .pagination {

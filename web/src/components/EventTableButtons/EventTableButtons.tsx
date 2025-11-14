@@ -1,25 +1,26 @@
-import { MdDeleteOutline, MdEdit } from 'react-icons/md';
+import { MdEdit } from 'react-icons/md';
 import styles from './EventTableButtons.module.css';
 import { FaTag } from 'react-icons/fa';
 import { CiSaveDown2 } from 'react-icons/ci';
+import { IoMdDoneAll } from "react-icons/io";
 
 type EventTableButtonsProps = {
-    onDelete?: () => void;
+    onResolve?: () => void;
     onTag?: () => void;
     onEdit?: () => void;
     isEditing: boolean;
 
 };
 
-const eventTableButtons = ({ onDelete, onTag, onEdit, isEditing }: EventTableButtonsProps) => {
+const eventTableButtons = ({ onResolve, onTag, onEdit, isEditing }: EventTableButtonsProps) => {
     return (
         <>
             <div className={styles['button-container']}>
                 <button
-                    className={`${styles['circle-button']} ${styles['pink']} ${isEditing ? styles['button-at-edit-mode'] : ''}`} onClick={onDelete}>
-                    <span className={styles['button-label']}>Delete</span>
+                    className={`${styles['circle-button']} ${styles['pink']} ${isEditing ? styles['button-at-edit-mode'] : ''}`} onClick={onResolve}>
+                    <span className={styles['button-label']}>Resolve</span>
                     <span className={styles['icon']}>
-                        <MdDeleteOutline />
+                        <IoMdDoneAll />
                     </span>
                 </button>
                 <button className={`${styles['circle-button']} ${styles['blue']} ${isEditing ? styles['button-at-edit-mode'] : ''}`} onClick={onTag}>
