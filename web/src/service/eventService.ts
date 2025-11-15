@@ -61,6 +61,7 @@ export const updateEvent = (id: string, updates: Partial<EventType>): EventType 
     return updatedEvent;
 };
 
-export const deleteEvent = (id: string): void => {
-
-}
+export const getEventById = (id: string): EventType | null => {
+    const events: EventType[] = JSON.parse(localStorage.getItem("events") || "[]");
+    return events.find(event => event.id === id) || null;
+};

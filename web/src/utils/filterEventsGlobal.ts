@@ -20,6 +20,9 @@ export const filterEventsGlobal = (
             callerName.includes(valueAfterTrim) ||
             description.includes(valueAfterTrim) ||
             assignedTeam.includes(valueAfterTrim) ||
+            city.includes(valueAfterTrim) ||
+            street.includes(valueAfterTrim) ||
+            houseNumber.includes(valueAfterTrim) ||
             location.includes(valueAfterTrim) ||
             eventNumber.includes(valueAfterTrim)
         );

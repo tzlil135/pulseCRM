@@ -306,10 +306,19 @@ td.description-col {
     height: 30px;
     cursor: ew-resize;
     background-color: #ccc;
+    margin-left: 16px;
 }
 
 
 .active-filter {
     background-color: #f1f5f5;
     color: var(--blue-color);
+}
+
+.invisible-col {
+    display: none;
+}
+
+.event-number-col1:hover {
+    background-color: #ffd6aa;
 }

@@ -1,8 +1,9 @@
 import { MdEdit } from 'react-icons/md';
 import styles from './EventTableButtons.module.css';
-import { FaTag } from 'react-icons/fa';
 import { CiSaveDown2 } from 'react-icons/ci';
 import { IoMdDoneAll } from "react-icons/io";
+import { FaClock } from "react-icons/fa6";
+
 
 type EventTableButtonsProps = {
     onResolve?: () => void;
@@ -24,9 +25,9 @@ const eventTableButtons = ({ onResolve, onTag, onEdit, isEditing }: EventTableBu
                     </span>
                 </button>
                 <button className={`${styles['circle-button']} ${styles['blue']} ${isEditing ? styles['button-at-edit-mode'] : ''}`} onClick={onTag}>
-                    <span className={styles['button-label']}>Tag</span>
+                    <span className={styles['button-label']}>OverDue</span>
                     <span className={styles['icon']}>
-                        <FaTag />
+                        <FaClock />
                     </span>
                 </button>
                 <button className={`${styles['circle-button']} ${styles['orange']} ${isEditing ? styles['edit-button-active'] : ''}`} onClick={onEdit}>

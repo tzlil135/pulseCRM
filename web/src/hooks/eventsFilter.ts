@@ -22,7 +22,11 @@ export const filterEvents = (
                 case 'callerName': field = norm(row.callerName); break;
                 case 'description': field = norm(row.description); break;
                 case 'assignedTeam': field = norm(row.assignedTeam); break;
-                case 'location': field = norm(row.location); break;
+                case 'location':
+                    field = norm(
+                        `${row.location.street}, ${row.location.city}, ${row.location.houseNumber}`
+                    );
+                    break;
                 case 'status': field = norm(row.status); break;
                 default:
                     field = norm((row as any)[column]);

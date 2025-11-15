@@ -308,3 +308,7 @@ td.email-col {
     background-color: #f1f5f5;
     color: var(--blue-color);
 }
+
+.contact-name-col1:hover {
+    background-color: #ffd6aa;
+}

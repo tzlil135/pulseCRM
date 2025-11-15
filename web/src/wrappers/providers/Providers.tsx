@@ -4,6 +4,7 @@ import { BackBtnProvider } from "../../contexts/BackBtn";
 import { useRef } from "react";
 import type { PropsWithChildren } from "react";
 import { ContactEditModeProvider } from "../../contexts/ContactEditMode";
+import { EventsGlobalFilterProvider } from "../../contexts/EventsGlobalFilter";
 
 
 const Providers = ({ children }: PropsWithChildren) => {
@@ -23,13 +24,15 @@ const Providers = ({ children }: PropsWithChildren) => {
     };
     return <>
         <FormSubmitContext.Provider value={{ submitForm, setSubmitFormFn }}>
-            <ContactsGlobalFilterProvider>
-                <ContactEditModeProvider>
-                    <BackBtnProvider>
-                        {children}
-                    </BackBtnProvider>
-                </ContactEditModeProvider>
-            </ContactsGlobalFilterProvider>
+            <EventsGlobalFilterProvider>
+                <ContactsGlobalFilterProvider>
+                    <ContactEditModeProvider>
+                        <BackBtnProvider>
+                            {children}
+                        </BackBtnProvider>
+                    </ContactEditModeProvider>
+                </ContactsGlobalFilterProvider>
+            </EventsGlobalFilterProvider>
         </FormSubmitContext.Provider>
     </>;
 }

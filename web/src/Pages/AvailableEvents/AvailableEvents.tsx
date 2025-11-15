@@ -3,7 +3,7 @@ import { IoEllipsisVertical } from 'react-icons/io5';
 import { useEffect, useState } from 'react';
 import { MdFilterListAlt } from 'react-icons/md';
 import EventTableSettings from '../../components/EventsTableSettings/EventsTableSettings';
-import { IoIosArrowRoundUp } from 'react-icons/io';
+import { IoIosArrowRoundDown, IoIosArrowRoundUp } from 'react-icons/io';
 import type { EventTableType, EventType } from '../../types/event';
 import { getEvents, updateEvent } from '../../service/eventService';
 import EventTableButtons from '../../components/EventTableButtons/EventTableButtons';
@@ -12,6 +12,13 @@ import { eventTableEditSchema } from '../../validations/eventTableEditSchema';
 import toast from 'react-hot-toast';
 import EventResolvationModal from '../../components/modals/EventResolvationModal/EventResolvationModal';
 import { resolveEventSchema } from '../../validations/resolveEventSchema';
+import { useEventsGlobalFilterContext } from '../../contexts/EventsGlobalFilter';
+import { filterEventsGlobal } from '../../utils/filterEventsGlobal';
+import { filterEvents } from '../../hooks/eventsFilter';
+import type { FilterType } from '../../types/fitchers';
+import EventsFilter from '../../components/EventsFilter/EventsFilter';
+import { sortEvents } from '../../hooks/useSortedEvents';
+import { useNavigate } from 'react-router-dom';
 
 export type ZebraColor = 'sky-blue' | 'cotton-candy-pink' | 'light-lemon' | '';
 
@@ -31,6 +38,15 @@ const toTableVM = (c: EventType): EventTableType => ({
 
 
 const AvailableEvents = () => {
+
+    const navigate = useNavigate();
+
+    const goToEvent = (id: string) => {
+        if (isEditing) return;
+        navigate(`/events/${id}`);
+    };
+
+    const { currentValue } = useEventsGlobalFilterContext();
 
     const [events, setEvents] = useState<EventTableType[]>([]);
 
@@ -83,7 +99,6 @@ const AvailableEvents = () => {
 
     const [displayedEvents, setDisplayedEvents] = useState<EventTableType[]>([]);
     const [allEvents, setAllEvents] = useState<EventTableType[]>([]);
-    const [visibleEvents, setVisibleEvents] = useState<EventTableType[]>([]);
 
     const [checkItems, setCheckItems] = useState<{ [id: string]: boolean }>({});
     const [eventsAmount, setEventsAmount] = useState(0);
@@ -93,17 +108,26 @@ const AvailableEvents = () => {
     const [eventsToEdit, setEventsToEdit] = useState<{ [key: string]: boolean }>({});
     const [eventEditValues, setEventEditValues] = useState<{ [key: string]: EventTableType }>({});
 
+    const [filteredEvents, setFilteredEvents] = useState<EventTableType[]>([]);
+
     const initial = readInitialEventsListState();
 
     const [rowsPerPage, setRowsPerPage] = useState<number>(() => initial.rowsPerPage ?? 10);
     const [currentPage, setCurrentPage] = useState<number>(() => initial.page ?? 1);
 
-    const totalPages = Math.max(1, Math.ceil(visibleEvents.length / rowsPerPage));
+    const totalPages = Math.max(1, Math.ceil(filteredEvents.length / rowsPerPage));
 
     const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
     const [resolveText, setResolveText] = useState('');
     const [idsToResolve, setIdsToResolve] = useState<string[]>([]);
     const [resolveError, setResolveError] = useState<string | null>(null);
+
+    const [activeFilters, setActiveFilters] = useState<{ [column: string]: FilterType | null }>({});
+    const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
+
+    const [sortedEvents, setSortedEvents] = useState<EventTableType[]>([]);
+    const [sortBy, setSortBy] = useState<keyof EventTableType | null>('eventNumber');
+    const [isAsc, setIsAsc] = useState<boolean>(false);
 
 
     const handleActive = () => {
@@ -139,24 +163,39 @@ const AvailableEvents = () => {
     }, []);
 
     useEffect(() => {
-        const openEvents = allEvents.filter(e => e.status === 'open');
-        setVisibleEvents(openEvents);
-    }, [allEvents]);
+        let openEvents = allEvents.filter(e => e.status === 'open');
+
+        if (currentValue.trim()) {
+            openEvents = filterEventsGlobal(openEvents, currentValue);
+        }
+
+        const afterColumnFilters = filterEvents(openEvents, activeFilters);
+
+        setFilteredEvents(afterColumnFilters);
+        setCurrentPage(1);
+    }, [allEvents, currentValue, activeFilters]);
 
     useEffect(() => {
-        const total = Math.max(1, Math.ceil(visibleEvents.length / rowsPerPage));
+        const sorted = sortEvents(filteredEvents, sortBy, isAsc);
+        setSortedEvents(sorted);
+    }, [filteredEvents, sortBy, isAsc]);
+
+
+    useEffect(() => {
+        const total = Math.max(1, Math.ceil(sortedEvents.length / rowsPerPage));
         if (currentPage > total) setCurrentPage(total);
 
         const start = (currentPage - 1) * rowsPerPage;
         const end = start + rowsPerPage;
-        const pageEvents = visibleEvents.slice(start, end);
+        const pageEvents = sortedEvents.slice(start, end);
 
         setDisplayedEvents(pageEvents);
-    }, [visibleEvents, currentPage, rowsPerPage]);
+    }, [sortedEvents, currentPage, rowsPerPage]);
+
 
     useEffect(() => {
-        setEventsAmount(visibleEvents.length);
-    }, [visibleEvents]);
+        setEventsAmount(sortedEvents.length);
+    }, [sortedEvents]);
 
 
 
@@ -172,11 +211,11 @@ const AvailableEvents = () => {
     const handleSelectAll = () => {
         if (isEditing) return;
 
-        const allSelected = displayedEvents.length > 0 && displayedEvents.every(c => checkItems[c.id]);
+        const allSelected = sortedEvents.length > 0 && sortedEvents.every(c => checkItems[c.id]);
         const selectEverything = !allSelected;
 
         const newCheckedItems: { [id: string]: boolean } = { ...checkItems };
-        displayedEvents.forEach(c => {
+        sortedEvents.forEach(c => {
             newCheckedItems[c.id] = selectEverything;
         });
 
@@ -184,10 +223,15 @@ const AvailableEvents = () => {
         setSelectAll(selectEverything);
     };
 
+
     useEffect(() => {
-        const checkedCount = Object.values(checkItems).filter(v => v).length;
+        const checkedCount = filteredEvents.reduce(
+            (count, ev) => count + (checkItems[ev.id] ? 1 : 0),
+            0
+        );
         setCheckedAmount(checkedCount);
-    }, [checkItems]);
+    }, [filteredEvents, checkItems]);
+
 
     const onResolve = () => {
         const selectedIds = Object.keys(checkItems).filter(id => checkItems[id]);
@@ -316,7 +360,7 @@ const AvailableEvents = () => {
             const newEventsToEdit: { [key: string]: boolean } = {};
             const newEventEditValues: { [key: string]: EventTableType } = {};
 
-            visibleEvents.forEach(event => {
+            sortedEvents.forEach(event => {
                 if (checkItems[event.id]) {
                     newEventsToEdit[event.id] = true;
                     newEventEditValues[event.id] = { ...event };
@@ -351,6 +395,62 @@ const AvailableEvents = () => {
 
     const handleNextPage = () => {
         setCurrentPage(prev => Math.min(prev + 1, totalPages));
+    };
+
+
+    const handleFilterClick = (column: string) => {
+        setOpenFilterColumn(prev => (prev === column ? null : column));
+
+        setActiveFilters(prev => {
+            if (prev[column]) return prev;
+
+            return {
+                ...prev,
+                [column]: { mode: 'contains', value: '' }
+            };
+        });
+    };
+
+
+    const handleFilterModeChange = (column: string, mode: 'contains' | 'equals') => {
+        setActiveFilters(prev => ({
+            ...prev,
+            [column]: {
+                mode,
+                value: prev[column]?.value || ''
+            }
+        }));
+    };
+
+    const handleFilterValueChange = (column: string, value: string) => {
+        setActiveFilters(prev => ({
+            ...prev,
+            [column]: {
+                mode: prev[column]?.mode || 'contains',
+                value
+            }
+        }));
+    };
+
+    const handleFilterApply = () => {
+        setCurrentPage(1);
+    };
+
+    const handleSort = (column: keyof EventTableType) => {
+        if (sortBy === column) {
+            setIsAsc(prev => !prev);
+        } else {
+            setSortBy(column);
+            setIsAsc(true);
+        }
+        setCurrentPage(1);
+    };
+
+    const zebraClasses: Record<ZebraColor, string> = {
+        'sky-blue': styles['zebra-sky-blue'],
+        'cotton-candy-pink': styles['zebra-cotton-candy-pink'],
+        'light-lemon': styles['zebra-light-lemon'],
+        '': styles['']
     };
 
 
@@ -409,58 +509,123 @@ const AvailableEvents = () => {
                                     <div className={`${styles['table-header-title']}`}>
                                         <span>Event No.</span>
                                         <div className={styles['sort-buttons']}>
-                                            <button className={styles['ascending-button']}><IoIosArrowRoundUp /></button>
-                                            <button className={`${styles['filter-button']} `}>
+                                            <button className={styles['ascending-button']} onClick={() => handleSort('eventNumber')}>{sortBy === 'eventNumber' ? (isAsc ? <IoIosArrowRoundUp /> : <IoIosArrowRoundDown />) : <IoIosArrowRoundUp style={{ opacity: 0.3 }} />}</button>
+                                            <button
+                                                className={`${styles['filter-button']} ${openFilterColumn === 'eventNumber' ? styles['active-filter'] : ''}`}
+                                                onClick={() => handleFilterClick('eventNumber')}
+                                                type="button"
+                                            >
                                                 <MdFilterListAlt />
                                             </button>
+                                            {openFilterColumn === 'eventNumber' && (
+                                                <EventsFilter
+                                                    column="Event No."
+                                                    filter={activeFilters['eventNumber']}
+                                                    onChangeMode={(mode) => handleFilterModeChange('eventNumber', mode)}
+                                                    onChangeValue={(value) => handleFilterValueChange('eventNumber', value)}
+                                                    onApply={handleFilterApply}
+                                                />
+                                            )}
                                             <div className={styles['resizer']}></div>
                                         </div>
                                     </div>
                                 </th>
-                                <th className={``}>
+                                <th className={`${!callerNameColumnVisible ? styles['invisible-col'] : ''}`}>
                                     <div className={`${styles['table-header-title']}`}>
                                         <span>Caller Name</span>
                                         <div className={styles['sort-buttons']}>
-                                            <button className={styles['ascending-button']}><IoIosArrowRoundUp /></button>
-                                            <button className={`${styles['filter-button']} `}>
+                                            <button className={styles['ascending-button']} onClick={() => handleSort('callerName')}>{sortBy === 'callerName' ? (isAsc ? <IoIosArrowRoundUp /> : <IoIosArrowRoundDown />) : <IoIosArrowRoundUp style={{ opacity: 0.3 }} />}</button>
+                                            <button
+                                                className={`${styles['filter-button']} ${openFilterColumn === 'callerName' ? styles['active-filter'] : ''}`}
+                                                onClick={() => handleFilterClick('callerName')}
+                                                type="button"
+                                            >
                                                 <MdFilterListAlt />
                                             </button>
+                                            {openFilterColumn === 'callerName' && (
+                                                <EventsFilter
+                                                    column="Caller Name"
+                                                    filter={activeFilters['callerName']}
+                                                    onChangeMode={(mode) => handleFilterModeChange('callerName', mode)}
+                                                    onChangeValue={(value) => handleFilterValueChange('callerName', value)}
+                                                    onApply={handleFilterApply}
+                                                />
+                                            )}
                                             <div className={styles['resizer']}></div>
                                         </div>
                                     </div>
                                 </th>
-                                <th className={`${styles['description-col']}`}>
+                                <th className={`${styles['description-col']} ${!descriptionColumnVisible ? styles['invisible-col'] : ''}`}>
                                     <div className={`${styles['table-header-title']}`}>
                                         <span>Description</span>
                                         <div className={styles['sort-buttons']}>
-                                            <button className={styles['ascending-button']}><IoIosArrowRoundUp /></button>
-                                            <button className={`${styles['filter-button']} `}>
+                                            <button className={styles['ascending-button']} onClick={() => handleSort('description')}>{sortBy === 'description' ? (isAsc ? <IoIosArrowRoundUp /> : <IoIosArrowRoundDown />) : <IoIosArrowRoundUp style={{ opacity: 0.3 }} />}</button>
+                                            <button
+                                                className={`${styles['filter-button']} ${openFilterColumn === 'description' ? styles['active-filter'] : ''}`}
+                                                onClick={() => handleFilterClick('description')}
+                                                type="button"
+                                            >
                                                 <MdFilterListAlt />
                                             </button>
+                                            {openFilterColumn === 'description' && (
+                                                <EventsFilter
+                                                    column="Description"
+                                                    filter={activeFilters['description']}
+                                                    onChangeMode={(mode) => handleFilterModeChange('description', mode)}
+                                                    onChangeValue={(value) => handleFilterValueChange('description', value)}
+                                                    onApply={handleFilterApply}
+                                                />
+                                            )}
                                             <div className={styles['resizer']}></div>
                                         </div>
                                     </div>
                                 </th>
-                                <th className={``}>
+                                <th className={`${!assignedTeamColumnVisible ? styles['invisible-col'] : ''}`}>
                                     <div className={`${styles['table-header-title']}`}>
                                         <span>Assigned Team</span>
                                         <div className={styles['sort-buttons']}>
-                                            <button className={styles['ascending-button']}><IoIosArrowRoundUp /></button>
-                                            <button className={`${styles['filter-button']} `}>
+                                            <button className={styles['ascending-button']} onClick={() => handleSort('assignedTeam')}>{sortBy === 'assignedTeam' ? (isAsc ? <IoIosArrowRoundUp /> : <IoIosArrowRoundDown />) : <IoIosArrowRoundUp style={{ opacity: 0.3 }} />}</button>
+                                            <button
+                                                className={`${styles['filter-button']} ${openFilterColumn === 'assignedTeam' ? styles['active-filter'] : ''}`}
+                                                onClick={() => handleFilterClick('assignedTeam')}
+                                                type="button"
+                                            >
                                                 <MdFilterListAlt />
                                             </button>
+                                            {openFilterColumn === 'assignedTeam' && (
+                                                <EventsFilter
+                                                    column="Assigned Team"
+                                                    filter={activeFilters['assignedTeam']}
+                                                    onChangeMode={(mode) => handleFilterModeChange('assignedTeam', mode)}
+                                                    onChangeValue={(value) => handleFilterValueChange('assignedTeam', value)}
+                                                    onApply={handleFilterApply}
+                                                />
+                                            )}
                                             <div className={styles['resizer']}></div>
                                         </div>
                                     </div>
                                 </th>
-                                <th className={``}>
+                                <th className={`${!locationColumnVisible ? styles['invisible-col'] : ''}`}>
                                     <div className={`${styles['table-header-title']}`}>
                                         <span>Location</span>
                                         <div className={styles['sort-buttons']}>
-                                            <button className={styles['ascending-button']}><IoIosArrowRoundUp /></button>
-                                            <button className={`${styles['filter-button']} `}>
+                                            <button className={styles['ascending-button']} onClick={() => handleSort('location')}>{sortBy === 'location' ? (isAsc ? <IoIosArrowRoundUp /> : <IoIosArrowRoundDown />) : <IoIosArrowRoundUp style={{ opacity: 0.3 }} />}</button>
+                                            <button
+                                                className={`${styles['filter-button']} ${openFilterColumn === 'location' ? styles['active-filter'] : ''}`}
+                                                onClick={() => handleFilterClick('location')}
+                                                type="button"
+                                            >
                                                 <MdFilterListAlt />
                                             </button>
+                                            {openFilterColumn === 'location' && (
+                                                <EventsFilter
+                                                    column="Location"
+                                                    filter={activeFilters['location']}
+                                                    onChangeMode={(mode) => handleFilterModeChange('location', mode)}
+                                                    onChangeValue={(value) => handleFilterValueChange('location', value)}
+                                                    onApply={handleFilterApply}
+                                                />
+                                            )}
                                             <div className={styles['resizer']}></div>
                                         </div>
                                     </div>
@@ -471,7 +636,8 @@ const AvailableEvents = () => {
                             {displayedEvents.map((event, index) => (
                                 <tr
                                     key={event.id}
-                                    className={`${styles['table-row']} ${checkItems[event.id] ? styles['row-checked'] : ''}`}
+                                    className={`${styles['table-row']} ${checkItems[event.id] ? styles['row-checked'] : ''} ${isZebraStripingEnabled && index % 2 === 1 ? zebraClasses[zebraStripingColor] : ''
+                                        }`}
                                 >
                                     <td className={`${styles['table-cell']}`}>
                                         <div
@@ -488,10 +654,10 @@ const AvailableEvents = () => {
                                             {checkItems[event.id] && <div className={styles['checkbox-dot']} />}
                                         </div>
                                     </td>
-                                    <td className={`${styles['table-cell']}`}>
+                                    <td className={`${styles['table-cell']} ${styles['event-number-col1']}`} onClick={() => goToEvent(event.id)}>
                                         {event.eventNumber}
                                     </td>
-                                    <td className={`${styles['table-cell']}`}>
+                                    <td className={`${styles['table-cell']} ${!callerNameColumnVisible ? styles['invisible-col'] : ''}`}>
                                         {eventsToEdit[event.id] ? (
                                             <>
                                                 <input
@@ -506,7 +672,7 @@ const AvailableEvents = () => {
                                             event.callerName
                                         )}
                                     </td>
-                                    <td className={`${styles['table-cell']} ${styles['description-col']}`}>
+                                    <td className={`${styles['table-cell']} ${styles['description-col']} ${!descriptionColumnVisible ? styles['invisible-col'] : ''}`}>
                                         {eventsToEdit[event.id] ? (
                                             <input
                                                 className={styles['input-field']}
@@ -519,7 +685,7 @@ const AvailableEvents = () => {
                                             event.description
                                         )}
                                     </td>
-                                    <td className={`${styles['table-cell']}} ${styles['assigned-team-col']}`}>
+                                    <td className={`${styles['table-cell']}} ${styles['assigned-team-col']} ${!assignedTeamColumnVisible ? styles['invisible-col'] : ''}`}>
                                         {eventsToEdit[event.id] ? (
                                             <input
                                                 className={styles['input-field']}
@@ -532,7 +698,7 @@ const AvailableEvents = () => {
                                             event.assignedTeam
                                         )}
                                     </td>
-                                    <td className={`${styles['table-cell']}`}>
+                                    <td className={`${styles['table-cell']} ${!locationColumnVisible ? styles['invisible-col'] : ''}`}>
                                         {eventsToEdit[event.id] ? (
                                             <>
                                                 <input

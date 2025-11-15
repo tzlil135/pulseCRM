@@ -107,8 +107,10 @@ const Contacts = () => {
     const [phoneColumnVisible, setPhoneColumnVisible] = useState(true);
     const [companyColumnVisible, setCompanyColumnVisible] = useState(true);
 
+    const [openFilterColumn, setOpenFilterColumn] = useState<string | null>(null);
+
     const [isAsc, setIsAsc] = useState<boolean>(() =>
-        typeof initial.isAsc === "boolean" ? initial.isAsc : false
+        typeof initial.isAsc === "boolean" ? initial.isAsc : true
     );
     const [sortBy, setSortBy] = useState<keyof ContactTableType | null>(() => initial.sortBy ?? "name");
 
@@ -380,15 +382,11 @@ const Contacts = () => {
     }, []);
 
     const handleFilterClick = (column: string) => {
-        setActiveFilter(prev => {
-            if (prev[column]) {
-                const newFilters = { ...prev };
-                delete newFilters[column];
-                return newFilters;
-            }
-            return { ...prev, [column]: { mode: 'contains', value: '' } };
-        });
+        setOpenFilterColumn(prev =>
+            prev === column ? null : column
+        );
     };
+
 
     const handleFilterModeChange = (column: string, mode: 'contains' | 'equals') => {
         setActiveFilter(prev => ({
@@ -473,18 +471,23 @@ const Contacts = () => {
                                         <span>Name</span>
                                         <div className={styles['sort-buttons']}>
                                             <button className={styles['ascending-button']} onClick={() => handleSort('name')}>{sortBy === 'name' ? (isAsc ? <IoIosArrowRoundUp /> : <IoIosArrowRoundDown />) : <IoIosArrowRoundUp style={{ opacity: 0.3 }} />}</button>
-                                            <button className={`${styles['filter-button']} ${activeFilter['name'] ? styles['active-filter'] : ''}`} onClick={() => handleFilterClick('name')}>
+                                            <button
+                                                className={`${styles['filter-button']} ${openFilterColumn === 'name' ? styles['active-filter'] : ''}`}
+                                                onClick={() => handleFilterClick('name')}
+                                            >
                                                 <MdFilterListAlt />
                                             </button>
-                                            {activeFilter['name'] !== undefined && activeFilter['name'] !== null && (
+
+                                            {openFilterColumn === 'name' && (
                                                 <ContactFilter
                                                     column="name"
-                                                    filter={activeFilter['name']}
+                                                    filter={activeFilter['name'] || { mode: 'contains', value: '' }}
                                                     onChangeMode={(mode) => handleFilterModeChange('name', mode)}
                                                     onChangeValue={(value) => handleFilterValueChange('name', value)}
                                                     onApply={handleFilterApply}
                                                 />
                                             )}
+
                                             <div className={styles['resizer']}></div>
                                         </div>
                                     </div>
@@ -494,18 +497,23 @@ const Contacts = () => {
                                         <span>Address</span>
                                         <div className={styles['sort-buttons']}>
                                             <button className={styles['ascending-button']} onClick={() => handleSort('address')}>{sortBy === 'address' ? (isAsc ? <IoIosArrowRoundUp /> : <IoIosArrowRoundDown />) : <IoIosArrowRoundUp style={{ opacity: 0.3 }} />}</button>
-                                            <button className={`${styles['filter-button']} ${activeFilter['address'] ? styles['active-filter'] : ''}`} onClick={() => handleFilterClick('address')}>
+                                            <button
+                                                className={`${styles['filter-button']} ${openFilterColumn === 'address' ? styles['active-filter'] : ''}`}
+                                                onClick={() => handleFilterClick('address')}
+                                            >
                                                 <MdFilterListAlt />
                                             </button>
-                                            {activeFilter['address'] !== undefined && activeFilter['address'] !== null && (
+
+                                            {openFilterColumn === 'address' && (
                                                 <ContactFilter
                                                     column="address"
-                                                    filter={activeFilter['address']}
+                                                    filter={activeFilter['address'] || { mode: 'contains', value: '' }}
                                                     onChangeMode={(mode) => handleFilterModeChange('address', mode)}
                                                     onChangeValue={(value) => handleFilterValueChange('address', value)}
                                                     onApply={handleFilterApply}
                                                 />
                                             )}
+
                                             <div className={styles['resizer']}></div>
                                         </div>
                                     </div>
@@ -515,18 +523,23 @@ const Contacts = () => {
                                         <span>Email</span>
                                         <div className={styles['sort-buttons']}>
                                             <button className={styles['ascending-button']} onClick={() => handleSort('email')}>{sortBy === 'email' ? (isAsc ? <IoIosArrowRoundUp /> : <IoIosArrowRoundDown />) : <IoIosArrowRoundUp style={{ opacity: 0.3 }} />}</button>
-                                            <button className={`${styles['filter-button']} ${activeFilter['email'] ? styles['active-filter'] : ''}`} onClick={() => handleFilterClick('email')}>
+                                            <button
+                                                className={`${styles['filter-button']} ${openFilterColumn === 'email' ? styles['active-filter'] : ''}`}
+                                                onClick={() => handleFilterClick('email')}
+                                            >
                                                 <MdFilterListAlt />
                                             </button>
-                                            {activeFilter['email'] !== undefined && activeFilter['email'] !== null && (
+
+                                            {openFilterColumn === 'email' && (
                                                 <ContactFilter
                                                     column="email"
-                                                    filter={activeFilter['email']}
+                                                    filter={activeFilter['email'] || { mode: 'contains', value: '' }}
                                                     onChangeMode={(mode) => handleFilterModeChange('email', mode)}
                                                     onChangeValue={(value) => handleFilterValueChange('email', value)}
                                                     onApply={handleFilterApply}
                                                 />
                                             )}
+
                                             <div className={styles['resizer']}></div>
                                         </div>
                                     </div>
@@ -536,18 +549,23 @@ const Contacts = () => {
                                         <span>Phone</span>
                                         <div className={styles['sort-buttons']}>
                                             <button className={styles['ascending-button']} onClick={() => handleSort('phone')}>{sortBy === 'phone' ? (isAsc ? <IoIosArrowRoundUp /> : <IoIosArrowRoundDown />) : <IoIosArrowRoundUp style={{ opacity: 0.3 }} />}</button>
-                                            <button className={`${styles['filter-button']} ${activeFilter['phone'] ? styles['active-filter'] : ''}`} onClick={() => handleFilterClick('phone')}>
+                                            <button
+                                                className={`${styles['filter-button']} ${openFilterColumn === 'phone' ? styles['active-filter'] : ''}`}
+                                                onClick={() => handleFilterClick('phone')}
+                                            >
                                                 <MdFilterListAlt />
                                             </button>
-                                            {activeFilter['phone'] !== undefined && activeFilter['phone'] !== null && (
+
+                                            {openFilterColumn === 'phone' && (
                                                 <ContactFilter
                                                     column="phone"
-                                                    filter={activeFilter['phone']}
+                                                    filter={activeFilter['phone'] || { mode: 'contains', value: '' }}
                                                     onChangeMode={(mode) => handleFilterModeChange('phone', mode)}
                                                     onChangeValue={(value) => handleFilterValueChange('phone', value)}
                                                     onApply={handleFilterApply}
                                                 />
                                             )}
+
                                             <div className={styles['resizer']}></div>
                                         </div>
                                     </div>
@@ -557,18 +575,23 @@ const Contacts = () => {
                                         <span>Company</span>
                                         <div className={styles['sort-buttons']}>
                                             <button className={styles['ascending-button']} onClick={() => handleSort('company')}>{sortBy === 'company' ? (isAsc ? <IoIosArrowRoundUp /> : <IoIosArrowRoundDown />) : <IoIosArrowRoundUp style={{ opacity: 0.3 }} />}</button>
-                                            <button className={`${styles['filter-button']} ${activeFilter['company'] ? styles['active-filter'] : ''}`} onClick={() => handleFilterClick('company')}>
+                                            <button
+                                                className={`${styles['filter-button']} ${openFilterColumn === 'company' ? styles['active-filter'] : ''}`}
+                                                onClick={() => handleFilterClick('company')}
+                                            >
                                                 <MdFilterListAlt />
                                             </button>
-                                            {activeFilter['company'] !== undefined && activeFilter['company'] !== null && (
+
+                                            {openFilterColumn === 'company' && (
                                                 <ContactFilter
                                                     column="company"
-                                                    filter={activeFilter['company']}
+                                                    filter={activeFilter['company'] || { mode: 'contains', value: '' }}
                                                     onChangeMode={(mode) => handleFilterModeChange('company', mode)}
                                                     onChangeValue={(value) => handleFilterValueChange('company', value)}
                                                     onApply={handleFilterApply}
                                                 />
                                             )}
+
                                             <div className={styles['resizer']}></div>
                                         </div>
                                     </div>
@@ -581,7 +604,6 @@ const Contacts = () => {
                                     key={contact.id}
                                     className={`${styles['table-row']} ${checkItems[contact.id] ? styles['row-checked'] : ''} ${isZebraStripingEnabled && index % 2 === 1 ? zebraClasses[zebraStripingColor] : ''
                                         }`}
-                                    onClick={() => { if (!isEditing) saveCurrentURLgoToContact(contact.id); }}
                                 >
                                     <td className={`${styles['table-cell']}`}>
                                         <div
@@ -598,7 +620,7 @@ const Contacts = () => {
                                             {checkItems[contact.id] && <div className={styles['checkbox-dot']} />}
                                         </div>
                                     </td>
-                                    <td className={`${styles['table-cell']}`}>
+                                    <td className={`${styles['table-cell']} ${styles['contact-name-col1']}`} onClick={() => { if (!isEditing) saveCurrentURLgoToContact(contact.id); }}>
                                         {contactsToEdit[contact.id] ? (
                                             <>
                                                 <input

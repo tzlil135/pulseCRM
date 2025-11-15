@@ -5,8 +5,10 @@ import { IoAddSharp } from 'react-icons/io5';
 import { VscRefresh } from 'react-icons/vsc';
 import { CiExport } from 'react-icons/ci';
 import { BsSortDown } from 'react-icons/bs';
-
+import { useEventsGlobalFilterContext } from '../../../contexts/EventsGlobalFilter';
 const OpenEventsDM = () => {
+
+    const { currentValue, setCurrentValue, clearValue } = useEventsGlobalFilterContext();
 
     const [activeButton, setActiveButton] = useState<string | null>(null);
 
@@ -58,8 +60,15 @@ const OpenEventsDM = () => {
                 </ul>
                 <div className={styles['navbar-right']}>
                     <div className={styles['search-container']}>
-                        <label htmlFor="">Filter</label>
-                        <input type="text" placeholder="Filter by keyword..." />
+                        <label htmlFor="contacts-global-filter">Filter</label>
+                        <input
+                            type="text"
+                            id="contacts-global-filter"
+                            placeholder="Filter by keyword..."
+                            value={currentValue}
+                            onChange={(e) => setCurrentValue(e.target.value)}
+                        />
+                        {currentValue && <button onClick={clearValue} className={styles['clear-button']}>Clear</button>}
                     </div>
                 </div>
             </div>

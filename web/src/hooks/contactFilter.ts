@@ -17,22 +17,43 @@ export const filterContacts = (
 
             if (column === 'name') {
                 const firstName = contact.name.firstName?.toLowerCase() || '';
+                const middleName = contact.name.middleName?.toLowerCase() || '';
                 const lastName = contact.name.lastName?.toLowerCase() || '';
 
                 if (filter.mode === 'contains') {
-                    return firstName.includes(filterValue) || lastName.includes(filterValue);
+                    return (
+                        firstName.includes(filterValue) ||
+                        middleName.includes(filterValue) ||
+                        lastName.includes(filterValue)
+                    );
                 } else if (filter.mode === 'equals') {
-                    return firstName === filterValue || lastName === filterValue;
+                    return (
+                        firstName === filterValue ||
+                        middleName === filterValue ||
+                        lastName === filterValue
+                    );
                 }
             } else if (column === 'address') {
                 const city = contact.address?.city?.toLowerCase() || '';
                 const street = contact.address?.street?.toLowerCase() || '';
-                const houseNumber = contact.address?.houseNumber?.toString() || '';
+                const houseNumber = (contact.address?.houseNumber ?? '').toString().toLowerCase();
+
+                const fullAddress = `${street}, ${city}, ${houseNumber}`.toLowerCase();
 
                 if (filter.mode === 'contains') {
-                    return city.includes(filterValue) || street.includes(filterValue) || houseNumber.includes(filterValue);
+                    return (
+                        fullAddress.includes(filterValue) ||
+                        city.includes(filterValue) ||
+                        street.includes(filterValue) ||
+                        houseNumber.includes(filterValue)
+                    );
                 } else if (filter.mode === 'equals') {
-                    return city === filterValue || street === filterValue || houseNumber === filterValue;
+                    return (
+                        fullAddress === filterValue ||
+                        city === filterValue ||
+                        street === filterValue ||
+                        houseNumber === filterValue
+                    );
                 }
             } else {
                 const contactValue = (contact as any)[column];
