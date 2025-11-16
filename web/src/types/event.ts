@@ -32,6 +32,8 @@ export type EventType = {
         action: string;
     }[];
     resolvation?: string;
+    priority?: 'low' | 'medium' | 'high';
+    eventType?: 'call' | 'meeting' | 'email' | 'other';
 }
 
 export type NewEventType = {
@@ -47,6 +49,8 @@ export type NewEventType = {
     subject: string;
     subSubject: string;
     resolvation?: string;
+    priority?: 'low' | 'medium' | 'high';
+    eventType?: 'call' | 'meeting' | 'email' | 'other';
 }
 
 export type NewEventFormFieldsPropsType = {

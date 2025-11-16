@@ -3,13 +3,13 @@
 ## 15-11-2025
 ### 3 missions:
 
-- [ ] event page (if closed - show a different menu)
-- [ ] tables check
-- [ ] closed / all events copy code to table.
+- [ ] parent event? 
+- [ ] event menu - closed / opened
+- [ ] closed / all events copy code to table components.
 
 #### בוצע
 
-- [ ] global filter
+- [ ] event timeline, status, priprity, event type,
 - [ ] filters & sorting
 - [ ] table settings
 
@@ -21,5 +21,7 @@
 <!-- - במיון ע"פ עמודה לא נתפס ע"פ שם אמצעי -->
 <!-- - מיון כן צריך גם על פי פסיקים למשל שיש בכתובת הוא לא יכול להתעלם מזה -->
 <!-- - אם כולם נבחרו ולאחר מכן סיננתי , יש צורך שכמות הנבחרים יושפע מכמות המוצגים לאחר הסינון -->
+<!-- - רק עמודה אחת בטבלה צריכה להכניס אותי לאדם / אירוע לחשוב על האופציה הזו -->
 
-- רק עמודה אחת בטבלה צריכה להכניס אותי לאדם / אירוע לחשוב על האופציה הזו
+- הוספת כפתור "אחורה" באירוע
+

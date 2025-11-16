@@ -4,7 +4,6 @@ import CreatedBy from "../../forms/AddEventForm/AddEventFormFields/CreatedBy/Cre
 import DescriptionField from "../../forms/AddEventForm/AddEventFormFields/Description/DescriptionField";
 import LocationField from "../../forms/AddEventForm/AddEventFormFields/Location/LocationField";
 import ParentChildEventsField from "../../forms/AddEventForm/AddEventFormFields/ParentChildEvents/ParentChildEventsField";
-import TimelineField from "../../forms/AddEventForm/AddEventFormFields/Timeline/TimelineField";
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import type { EventType, NewEventType } from "../../types/event";
@@ -13,12 +12,18 @@ import { joiResolver } from "@hookform/resolvers/joi/dist/joi.js";
 import { addEventSchema } from "../../validations/addEventSchema";
 import { toast } from "react-hot-toast";
 import styles from "./Event.module.css";
+import { useFormSubmitContext } from "../../contexts/FormSubmitContext";
+import type { FieldErrors } from "react-hook-form";
 
 const Event = () => {
 
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [event, setEvent] = useState<EventType | null>(null);
+
+    const [newTimelineNote, setNewTimelineNote] = useState("");
+
+    const { setSubmitFormFn } = useFormSubmitContext();
 
     const { register, handleSubmit, reset, formState: { errors } } = useForm<NewEventType>({
         defaultValues: {
@@ -34,6 +39,8 @@ const Event = () => {
             subject: '',
             subSubject: '',
             resolvation: '',
+            priority: 'low',
+            eventType: 'call',
         },
         mode: 'onChange',
         resolver: joiResolver(addEventSchema)
@@ -65,6 +72,8 @@ const Event = () => {
             subject: found.subject ?? '',
             subSubject: found.subSubject ?? '',
             resolvation: found.resolvation ?? '',
+            priority: found.priority ?? 'low',
+            eventType: found.eventType ?? 'call',
         });
     }, [id, reset, navigate]);
 
@@ -77,6 +86,7 @@ const Event = () => {
         }
 
         updateEvent(event.id, {
+            ...event,
             callerName: data.callerName,
             description: data.description,
             location: {
@@ -88,10 +98,65 @@ const Event = () => {
             subject: data.subject,
             subSubject: data.subSubject,
             resolvation: data.resolvation,
+            priority: data.priority,
+            eventType: data.eventType,
         });
 
         toast.success("Event updated successfully!");
     };
+
+    const onError = (errors: FieldErrors<NewEventType>) => {
+        const firstError = Object.values(errors)[0];
+
+        if (!firstError) return;
+
+        if (firstError?.message) {
+            toast.error(firstError.message as string);
+            return;
+        }
+
+        const nestedError: any = firstError;
+        if (nestedError?.city?.message) {
+            toast.error(nestedError.city.message);
+        } else if (nestedError?.street?.message) {
+            toast.error(nestedError.street.message);
+        } else if (nestedError?.houseNumber?.message) {
+            toast.error(nestedError.houseNumber.message);
+        } else {
+            toast.error("Please fix the highlighted fields");
+        }
+    };
+
+    const handleAddTimelineNote = () => {
+        if (!event) return;
+        if (isReadOnly) return;
+        if (!newTimelineNote.trim()) return;
+
+        const newEntry = {
+            timestamp: new Date().toISOString(),
+            user: "TC",
+            action: newTimelineNote.trim(),
+        };
+
+        const updatedEvent: EventType = {
+            ...event,
+            timeLine: [newEntry, ...(event.timeLine ?? [])],
+        };
+
+        setEvent(updatedEvent);
+
+        updateEvent(event.id, updatedEvent);
+
+        setNewTimelineNote("");
+    };
+
+    useEffect(() => {
+        if (!event) return;
+
+        const submitFn = handleSubmit(onSubmit, onError);
+        setSubmitFormFn(submitFn);
+    }, [event, handleSubmit, setSubmitFormFn]);
+
 
 
     return (
@@ -103,19 +168,20 @@ const Event = () => {
                         <div className={styles['details']}>
                             <div className={styles['details-content']} style={{ borderRight: '1px solid #ccc' }}>
                                 <p>Event Number</p>
-                                <p style={{ fontWeight: 'bold' }}>---</p>
+                                <p style={{ fontWeight: 'bold' }}>{event?.eventNumber}</p>
                             </div>
                             <div className={styles['details-content']} style={{ borderRight: '1px solid #ccc' }}>
                                 <p>priority</p>
-                                <select name="priority" id="priority">
+                                <select {...register("priority")} disabled={isReadOnly}>
                                     <option value="low">Low</option>
                                     <option value="high">High</option>
                                     <option value="medium">Medium</option>
                                 </select>
+
                             </div>
                             <div className={styles['details-content']}>
                                 <p>Event Type</p>
-                                <select name="event-type" id="event-type">
+                                <select {...register("eventType")} disabled={isReadOnly}>
                                     <option value="call">Call</option>
                                     <option value="meeting">Meeting</option>
                                     <option value="email">Email</option>
@@ -141,7 +207,37 @@ const Event = () => {
                     </div>
                     <div className={styles["form-fields-wrapper"]}>
                         <ParentChildEventsField />
-                        <TimelineField />
+
+                        {!isReadOnly && (
+                            <div className={styles["timeline-section"]}>
+                                <h4>Timeline</h4>
+                                <div className={styles["timeline-input"]}>
+                                    <input
+                                        value={newTimelineNote}
+                                        onChange={(e) => setNewTimelineNote(e.target.value)}
+                                        placeholder="Add a note to the timeline..."
+                                    />
+                                    <button type="button" onClick={handleAddTimelineNote}>
+                                        Add Note
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                        {event?.timeLine && event.timeLine.length > 0 ? (
+                            <ul className={styles["timeline-list"]}>
+                                {event.timeLine.map((item, index) => (
+                                    <li key={index} className={styles["timeline-item"]}>
+                                        <div className={styles["timeline-header"]}>
+                                            <div className={styles["timeline-user"]}>{item.user}</div> ·{" "}
+                                            {new Date(item.timestamp).toLocaleString()}
+                                        </div>
+                                        <div className={styles["timeline-action"]}>{item.action}</div>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p>No timeline notes yet.</p>
+                        )}
                     </div>
                 </form>
             </div>

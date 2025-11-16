@@ -8,6 +8,7 @@ import DashboardDM from './menuItems/DashboardDM';
 import AddEventsDM from './menuItems/AddEventDM';
 import AddContactDM from './menuItems/AddContactDM';
 import ContactDM from './menuItems/ContactDM';
+import EventDM from './menuItems/EventDM';
 
 const DynamicMenu = () => {
 
@@ -40,6 +41,9 @@ const DynamicMenu = () => {
                 )}
                 {path.startsWith('/contacts/') && (
                     <ContactDM />
+                )}
+                {path.startsWith('/events/') && (
+                    <EventDM />
                 )}
             </nav>
 

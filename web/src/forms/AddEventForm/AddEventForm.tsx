@@ -34,6 +34,8 @@ const AddEventForm = () => {
                 subject: '',
                 subSubject: '',
                 resolvation: '',
+                priority: 'low',
+                eventType: 'call',
             },
             mode: 'onChange',
             resolver: joiResolver(
@@ -70,15 +72,21 @@ const AddEventForm = () => {
                             </div>
                             <div className={styles['details-content']} style={{ borderRight: '1px solid #ccc' }}>
                                 <p>priority</p>
-                                <select name="priority" id="priority">
+                                <select
+                                    id="priority"
+                                    {...register("priority")}
+                                >
                                     <option value="low">Low</option>
-                                    <option value="high">High</option>
                                     <option value="medium">Medium</option>
+                                    <option value="high">High</option>
                                 </select>
                             </div>
                             <div className={styles['details-content']}>
                                 <p>Event Type</p>
-                                <select name="event-type" id="event-type">
+                                <select
+                                    id="eventType"
+                                    {...register("eventType")}
+                                >
                                     <option value="call">Call</option>
                                     <option value="meeting">Meeting</option>
                                     <option value="email">Email</option>

@@ -34,4 +34,12 @@ export const addEventSchema = Joi.object({
         'any.required': 'Assigned team is required'
     }),
     resolvation: Joi.string().allow('').optional(),
+    priority: Joi.string()
+        .valid('low', 'medium', 'high')
+        .default('low')
+        .optional(),
+    eventType: Joi.string()
+        .valid('call', 'meeting', 'email', 'other')
+        .default('call')
+        .optional(),
 });
