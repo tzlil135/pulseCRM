@@ -34,6 +34,7 @@ export type EventType = {
     resolvation?: string;
     priority?: 'low' | 'medium' | 'high';
     eventType?: 'call' | 'meeting' | 'email' | 'other';
+    parentEventId?: string;
 }
 
 export type NewEventType = {
@@ -51,6 +52,7 @@ export type NewEventType = {
     resolvation?: string;
     priority?: 'low' | 'medium' | 'high';
     eventType?: 'call' | 'meeting' | 'email' | 'other';
+    parentEventId?: string;
 }
 
 export type NewEventFormFieldsPropsType = {

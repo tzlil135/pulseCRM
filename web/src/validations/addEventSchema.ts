@@ -42,4 +42,5 @@ export const addEventSchema = Joi.object({
         .valid('call', 'meeting', 'email', 'other')
         .default('call')
         .optional(),
+    parentEventId: Joi.string().allow(null).optional(),
 });

@@ -85,3 +85,11 @@
     cursor: pointer;
     font-size: 14px;
 }
+
+.resolved-badge {
+    background-color: #007bff;
+    color: white;
+    padding: 5px 10px;
+    border-radius: 5px;
+    font-size: 14px;
+}

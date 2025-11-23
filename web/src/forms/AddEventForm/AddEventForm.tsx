@@ -10,14 +10,28 @@ import CreatedBy from "./AddEventFormFields/CreatedBy/CreatedBy";
 import ParentChildEventsField from "./AddEventFormFields/ParentChildEvents/ParentChildEventsField";
 import TimelineField from "./AddEventFormFields/Timeline/TimelineField";
 import { useFormSubmitContext } from "../../contexts/FormSubmitContext";
-import { useEffect } from "react";
-import { addEvent } from "../../service/eventService";
+import { useEffect, useState } from "react";
+import { addEvent, getEventById } from "../../service/eventService";
 import toast, { Toaster } from "react-hot-toast";
+import { useSearchParams } from "react-router-dom";
+import { useNavigate } from 'react-router-dom';
 
 
 const AddEventForm = () => {
 
-    const { setSubmitFormFn } = useFormSubmitContext();
+    const { setSubmitFormFn, setIsEventReadOnly } = useFormSubmitContext();
+
+    useEffect(() => {
+        setIsEventReadOnly(false);
+    }, [setIsEventReadOnly]);
+
+
+    const [searchParams] = useSearchParams();
+    const parentIdFromUrl = searchParams.get("parentId") || undefined;
+
+    const [parentEventNumber, setParentEventNumber] = useState<string | undefined>(undefined);
+
+    const navigate = useNavigate();
 
     const { register, handleSubmit, formState: { errors } } = useForm<NewEventType>(
         {
@@ -45,17 +59,37 @@ const AddEventForm = () => {
     );
 
     useEffect(() => {
+        if (!parentIdFromUrl) {
+            setParentEventNumber(undefined);
+            return;
+        }
+
+        const parentEvent = getEventById(parentIdFromUrl);
+
+        if (parentEvent) {
+            setParentEventNumber(String(parentEvent.eventNumber));
+        } else {
+            setParentEventNumber(undefined);
+        }
+    }, [parentIdFromUrl]);
+
+    useEffect(() => {
         const onSubmit = (data: NewEventType) => {
-            console.log("Inside onSubmit");
-            console.log(data);
+            const finalData: NewEventType = {
+                ...data,
+                parentEventId: parentIdFromUrl,
+            };
+
+            const createdEvent = addEvent(finalData);
+
             toast.success("Event added successfully!");
-            addEvent(data);
+
+            navigate(`/events/${createdEvent.id}`);
         };
 
         const submitFunction = handleSubmit(onSubmit);
-
         setSubmitFormFn(submitFunction);
-    }, [setSubmitFormFn, handleSubmit]);
+    }, [setSubmitFormFn, handleSubmit, parentIdFromUrl, navigate]);
 
 
     return (
@@ -111,7 +145,14 @@ const AddEventForm = () => {
                         <CreatedBy />
                     </div>
                     <div className={styles["form-fields-wrapper"]}>
-                        <ParentChildEventsField />
+                        <ParentChildEventsField
+                            parentEventId={parentIdFromUrl}
+                            parentEventNumber={parentEventNumber}
+                            onParentClick={() => {
+                                if (!parentIdFromUrl) return;
+                                navigate(`/events/${parentIdFromUrl}`);
+                            }}
+                        />
                         <TimelineField />
                     </div>
                 </form>

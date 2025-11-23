@@ -14,6 +14,9 @@ import { toast } from "react-hot-toast";
 import styles from "./Event.module.css";
 import { useFormSubmitContext } from "../../contexts/FormSubmitContext";
 import type { FieldErrors } from "react-hook-form";
+import EventResolvationModal from "../../components/modals/EventResolvationModal/EventResolvationModal";
+import ParentEventModal from "../../components/modals/ParentEventModal/ParentEventModal";
+
 
 const Event = () => {
 
@@ -23,9 +26,33 @@ const Event = () => {
 
     const [newTimelineNote, setNewTimelineNote] = useState("");
 
-    const { setSubmitFormFn } = useFormSubmitContext();
+    const { setSubmitFormFn, setResolveEventFn, setIsEventReadOnly, setCreateChildEventFn } = useFormSubmitContext();
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm<NewEventType>({
+    const [isResolveModalOpen, setIsResolveModalOpen] = useState(false);
+    const [resolveModalValue, setResolveModalValue] = useState("");
+    const [resolveModalError, setResolveModalError] = useState<string | null>(null);
+
+    const [isChildModalOpen, setIsChildModalOpen] = useState(false);
+    const [parentEventNumber, setParentEventNumber] = useState<string | undefined>(undefined);
+
+    useEffect(() => {
+        if (!event?.parentEventId) {
+            setParentEventNumber(undefined);
+            return;
+        }
+
+        const parentEvent = getEventById(event.parentEventId);
+
+        if (parentEvent) {
+            setParentEventNumber(String(parentEvent.eventNumber));
+        } else {
+            setParentEventNumber(undefined);
+        }
+    }, [event?.parentEventId]);
+
+
+
+    const { register, handleSubmit, reset, formState: { errors, isDirty }, setValue, getValues } = useForm<NewEventType>({
         defaultValues: {
             callerName: '',
             description: '',
@@ -47,6 +74,25 @@ const Event = () => {
     });
 
     const isReadOnly = event?.status === 'closed';
+
+    useEffect(() => {
+        setIsEventReadOnly(isReadOnly);
+    }, [isReadOnly, setIsEventReadOnly]);
+
+    useEffect(() => {
+        if (!event) return;
+
+        setCreateChildEventFn(() => {
+            if (!event) return;
+
+            if (isDirty) {
+                setIsChildModalOpen(true);
+            } else {
+                navigate(`/add-event?parentId=${event.id}`);
+            }
+        });
+    }, [event, isDirty, setCreateChildEventFn, navigate]);
+
 
     useEffect(() => {
         if (!id) return;
@@ -102,6 +148,8 @@ const Event = () => {
             eventType: data.eventType,
         });
 
+        reset(data);
+
         toast.success("Event updated successfully!");
     };
 
@@ -150,6 +198,108 @@ const Event = () => {
         setNewTimelineNote("");
     };
 
+    const closeEventWithExistingResolution = (resolution: string) => {
+        if (!event) return;
+
+        const newTimelineEntry = {
+            timestamp: new Date().toISOString(),
+            user: "TC",
+            action: `Event resolved: ${resolution}`,
+        };
+
+        const updatedEvent: EventType = {
+            ...event,
+            resolvation: resolution,
+            status: "closed",
+            timeLine: [newTimelineEntry, ...(event.timeLine ?? [])],
+        };
+
+        setEvent(updatedEvent);
+        updateEvent(event.id, updatedEvent);
+        toast.success("Event closed successfully");
+    };
+
+
+
+    const handleResolveConfirm = () => {
+        if (!event) return;
+
+        const value = resolveModalValue.trim();
+        if (!value) {
+            setResolveModalError("Resolution note is required");
+            return;
+        }
+
+        setValue("resolvation", value, { shouldValidate: true });
+
+        closeEventWithExistingResolution(value);
+
+        setIsResolveModalOpen(false);
+        setResolveModalError(null);
+    };
+
+    const handleReopen = () => {
+        if (!event) return;
+
+        const updatedEvent: EventType = {
+            ...event,
+            status: "open",
+        };
+
+        setEvent(updatedEvent);
+        updateEvent(event.id, updatedEvent);
+        toast.success("Event reopened");
+    };
+
+    const handleChildConfirm = () => {
+        if (!event) return;
+
+        navigate(`/events/new?parentId=${event.id}`);
+        setIsChildModalOpen(false);
+    };
+
+    const handleChildCancel = () => {
+        setIsChildModalOpen(false);
+    };
+
+
+
+    const handleResolveCancel = () => {
+        setIsResolveModalOpen(false);
+        setResolveModalError(null);
+    };
+
+
+    useEffect(() => {
+        if (!event) return;
+
+        const resolveWithValidation = handleSubmit(
+            () => {
+                if (event.status === "closed") {
+                    handleReopen();
+                    return;
+                }
+
+                const resolutionFromForm = (getValues("resolvation") || "").trim();
+
+                if (resolutionFromForm.length > 0) {
+                    closeEventWithExistingResolution(resolutionFromForm);
+                } else {
+                    setResolveModalValue("");
+                    setResolveModalError(null);
+                    setIsResolveModalOpen(true);
+                }
+            },
+            onError
+        );
+
+        setResolveEventFn(() => {
+            resolveWithValidation();
+        });
+    }, [event, handleSubmit, setResolveEventFn, getValues]);
+
+
+
     useEffect(() => {
         if (!event) return;
 
@@ -164,7 +314,7 @@ const Event = () => {
             <div className={styles['form-container']}>
                 <div className={styles['form-header']}>
                     <div className={styles['form-header-top']}>
-                        <h3>New Event</h3>
+                        <h3>{`Event at ${event?.location.city}, ${event?.location.street} ${event?.location.houseNumber} - handled by ${event?.assignedTeam}`}</h3>
                         <div className={styles['details']}>
                             <div className={styles['details-content']} style={{ borderRight: '1px solid #ccc' }}>
                                 <p>Event Number</p>
@@ -196,51 +346,78 @@ const Event = () => {
                     </div>
                 </div>
                 <form className={styles["form-content"]} action="">
-                    <div className={styles["form-fields-wrapper"]}>
-                        <CallerNameField register={register} errors={errors} />
+                    <fieldset disabled={isReadOnly}>
+                        <div className={styles["form-fields-wrapper"]}>
+                            <CallerNameField register={register} errors={errors} />
 
-                    </div>
-                    <div className={styles["form-fields-wrapper"]}>
-                        <LocationField register={register} errors={errors} />
-                        <DescriptionField register={register} errors={errors} />
-                        <CreatedBy />
-                    </div>
-                    <div className={styles["form-fields-wrapper"]}>
-                        <ParentChildEventsField />
+                        </div>
+                        <div className={styles["form-fields-wrapper"]}>
+                            <LocationField register={register} errors={errors} />
+                            <DescriptionField register={register} errors={errors} />
+                            <CreatedBy />
+                        </div>
+                        <div className={styles["form-fields-wrapper"]}>
+                            <ParentChildEventsField
+                                parentEventId={event?.parentEventId}
+                                parentEventNumber={parentEventNumber}
+                                onParentClick={() => {
+                                    if (event?.parentEventId) {
+                                        navigate(`/events/${event.parentEventId}`);
+                                    }
+                                }} />
 
-                        {!isReadOnly && (
-                            <div className={styles["timeline-section"]}>
-                                <h4>Timeline</h4>
-                                <div className={styles["timeline-input"]}>
-                                    <input
-                                        value={newTimelineNote}
-                                        onChange={(e) => setNewTimelineNote(e.target.value)}
-                                        placeholder="Add a note to the timeline..."
-                                    />
-                                    <button type="button" onClick={handleAddTimelineNote}>
-                                        Add Note
-                                    </button>
+                            {!isReadOnly && (
+                                <div className={styles["timeline-section"]}>
+                                    <h4>Timeline</h4>
+                                    <div className={styles["timeline-input"]}>
+                                        <input
+                                            value={newTimelineNote}
+                                            onChange={(e) => setNewTimelineNote(e.target.value)}
+                                            placeholder="Add a note to the timeline..."
+                                        />
+                                        <button type="button" onClick={handleAddTimelineNote}>
+                                            Add Note
+                                        </button>
+                                    </div>
                                 </div>
-                            </div>
-                        )}
-                        {event?.timeLine && event.timeLine.length > 0 ? (
-                            <ul className={styles["timeline-list"]}>
-                                {event.timeLine.map((item, index) => (
-                                    <li key={index} className={styles["timeline-item"]}>
-                                        <div className={styles["timeline-header"]}>
-                                            <div className={styles["timeline-user"]}>{item.user}</div> ·{" "}
-                                            {new Date(item.timestamp).toLocaleString()}
-                                        </div>
-                                        <div className={styles["timeline-action"]}>{item.action}</div>
-                                    </li>
-                                ))}
-                            </ul>
-                        ) : (
-                            <p>No timeline notes yet.</p>
-                        )}
-                    </div>
+                            )}
+                            {event?.timeLine && event.timeLine.length > 0 ? (
+                                <ul className={styles["timeline-list"]}>
+                                    {event.timeLine.map((item, index) => (
+                                        <li key={index} className={styles["timeline-item"]}>
+                                            <div className={styles["timeline-header"]}>
+                                                <div className={styles["timeline-user"]}>{item.user}</div> ·{" "}
+                                                {new Date(item.timestamp).toLocaleString()}
+                                            </div>
+                                            <div className={styles["timeline-action"]}>{item.action}</div>
+                                        </li>
+                                    ))}
+                                </ul>
+                            ) : (
+                                <p>No timeline notes yet.</p>
+                            )}
+                        </div>
+                    </fieldset>
+
                 </form>
             </div>
+            <EventResolvationModal
+                isOpen={isResolveModalOpen}
+                value={resolveModalValue}
+                onChange={setResolveModalValue}
+                onConfirm={handleResolveConfirm}
+                onCancel={handleResolveCancel}
+                error={resolveModalError}
+            />
+            {
+                isChildModalOpen && (
+                    <ParentEventModal
+                        isOpen={isChildModalOpen}
+                        onConfirm={handleChildConfirm}
+                        onCancel={handleChildCancel}
+                    />
+                )
+            }
         </>
     )
 };

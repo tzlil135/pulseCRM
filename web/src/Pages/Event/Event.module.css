@@ -72,6 +72,10 @@
 }
 
 .form-content {
+    width: 100%;
+}
+
+fieldset {
     height: 390px;
     overflow-y: auto;
     width: 100%;

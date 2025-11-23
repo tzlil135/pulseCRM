@@ -1,17 +1,15 @@
 # toDo missions list
 
-## 15-11-2025
+## 23-11-2025
 ### 3 missions:
 
-- [ ] parent event? 
-- [ ] event menu - closed / opened
+- [ ] לא נשמר בלוקל סטורג' כמות המופיעים בטבלה ומתאפס
+- [ ] 
 - [ ] closed / all events copy code to table components.
 
 #### בוצע
 
-- [ ] event timeline, status, priprity, event type,
-- [ ] filters & sorting
-- [ ] table settings
+- [ ] event menu - closed / opened
 
 #### notes 
 
